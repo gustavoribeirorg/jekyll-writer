@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+build/
+dist/
+*.spec
+config.json
+.jekyll_writer_cache.json
+*.log
+prompt.txt
+*-net/
+*.net/
