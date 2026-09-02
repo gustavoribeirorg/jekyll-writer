@@ -1,8 +1,10 @@
 import os
 import re
+import shutil
+import tempfile
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -12,6 +14,8 @@ from jekyll_writer.frontmatter import (
     parse_front_matter,
     save_post,
 )
+from jekyll_writer.images import process_and_copy_image
+from jekyll_writer.image_optimizer import optimize_images
 from jekyll_writer.publisher import PublisherEngine
 
 app = FastAPI(title="Jekyll Writer Web", version="1.0.0")
@@ -190,4 +194,37 @@ def save_post_endpoint(
         "filename": os.path.basename(saved_path),
         "path": saved_path,
     }
+
+
+@app.post("/api/images/upload")
+def upload_image(
+    file: UploadFile = File(...),
+    cfg: ConfigManager = Depends(get_config_manager),
+) -> Dict[str, Any]:
+    jekyll_root = cfg.get("jekyll_root", "")
+    if not jekyll_root or not os.path.isdir(jekyll_root):
+        raise HTTPException(status_code=400, detail="Diretório do Jekyll não configurado")
+
+    temp_dir = tempfile.mkdtemp()
+    try:
+        filename = file.filename or "image.png"
+        temp_path = os.path.join(temp_dir, os.path.basename(filename))
+        with open(temp_path, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        html_snippet, dest_path = process_and_copy_image(temp_path, jekyll_root)
+        optimize_images(jekyll_root)
+
+        return {
+            "success": True,
+            "html_snippet": html_snippet,
+            "filename": os.path.basename(dest_path),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao processar imagem: {e}")
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
 
