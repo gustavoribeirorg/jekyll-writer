@@ -22,21 +22,21 @@ def test_generate_new_post_template():
 def test_slugify():
     assert slugify("Servidor Rodando no Termux!") == "servidor-rodando-no-termux"
     assert slugify("Olá Mundo, Teste 123") == "ola-mundo-teste-123"
-    assert slugify("Fotolog: Minha Viagem & Fotos") == "fotolog-minha-viagem-fotos"
+    assert slugify("Viagens: Minha Viagem & Fotos") == "viagens-minha-viagem-fotos"
 
 def test_parse_front_matter():
     text = """---
 title: Teste de Post
 date: 2026-09-01 12:30 -0300
 layout: post
-categories: Fotolog
+categories: Viagens
 tags: [jekyll, blog]
 ---
 Conteudo aqui
 """
     fm = parse_front_matter(text)
     assert fm.get("title") == "Teste de Post"
-    assert fm.get("categories") == "Fotolog"
+    assert fm.get("categories") == "Viagens"
     assert fm.get("layout") == "post"
 
 def test_generate_post_filename():

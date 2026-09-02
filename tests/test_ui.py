@@ -3,11 +3,19 @@ import pytest
 from jekyll_writer.config import ConfigManager
 from jekyll_writer.ui import JekyllWriterApp
 
-def test_app_initialization_and_template(tmp_path):
-    cfg_file = tmp_path / "config.json"
+@pytest.fixture(scope="module")
+def app(tmp_path_factory):
+    tmp = tmp_path_factory.mktemp("ui_test")
+    cfg_file = tmp / "config.json"
     cfg = ConfigManager(str(cfg_file))
-    app = JekyllWriterApp(config_manager=cfg)
-    
+    application = JekyllWriterApp(config_manager=cfg)
+    yield application
+    try:
+        application.destroy()
+    except Exception:
+        pass
+
+def test_app_initialization_and_template(app):
     # Check that textbox contains initial template
     content = app.textbox.get("1.0", "end-1c")
     assert "layout: post" in content
@@ -21,13 +29,7 @@ def test_app_initialization_and_template(tmp_path):
     app.toggle_log_drawer()
     assert app.log_drawer_visible is False
 
-    app.destroy()
-
-def test_format_list_multiline(tmp_path):
-    cfg_file = tmp_path / "config.json"
-    cfg = ConfigManager(str(cfg_file))
-    app = JekyllWriterApp(config_manager=cfg)
-
+def test_format_list_multiline(app):
     # Set content with 3 lines
     app.textbox.delete("1.0", "end")
     app.textbox.insert("1.0", "Primeira linha\nSegunda linha\nTerceira linha")
@@ -46,5 +48,3 @@ def test_format_list_multiline(tmp_path):
     app._format_list()
     result_off = app.textbox.get("1.0", "end-1c")
     assert result_off == "Primeira linha\nSegunda linha\nTerceira linha"
-
-    app.destroy()

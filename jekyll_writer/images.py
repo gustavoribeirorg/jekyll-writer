@@ -20,7 +20,7 @@ def generate_figure_html(web_path: str, caption: str) -> str:
         '</figure>'
     )
 
-def process_and_copy_image(source_image_path: str, jekyll_root: str, is_fotolog: bool = False) -> Tuple[str, str]:
+def process_and_copy_image(source_image_path: str, jekyll_root: str) -> Tuple[str, str]:
     source = Path(source_image_path)
     stem_slug = slugify(source.stem)
     ext = source.suffix.lower()

@@ -428,8 +428,7 @@ class PublisherEngine:
         jekyll_root: str,
         has_images: bool,
         jekyll_cmd: str,
-        ssh_config: Dict[str, Any],
-        is_fotolog: bool = False
+        ssh_config: Dict[str, Any]
     ) -> bool:
         self._is_cancelled = False
         self.log("=========================================", "info")
