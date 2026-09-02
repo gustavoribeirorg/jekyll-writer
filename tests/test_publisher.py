@@ -22,7 +22,6 @@ def test_publisher_pipeline_missing_root(tmp_path):
     engine = PublisherEngine(log_callback=lambda msg, lvl: logs.append((msg, lvl)))
     success = engine.run_pipeline(
         jekyll_root=str(tmp_path / "non_existent"),
-        is_fotolog=False,
         has_images=False,
         jekyll_cmd="echo test",
         ssh_config={}
@@ -43,7 +42,6 @@ def test_publisher_pipeline_with_mocked_steps(tmp_path):
     with patch.object(engine, "sync_sftp", return_value=True) as mock_sync:
         success = engine.run_pipeline(
             jekyll_root=str(jekyll_root),
-            is_fotolog=False,
             has_images=True,
             jekyll_cmd=f'"{sys.executable}" -c "print(\'build ok\')"',
             ssh_config={"ssh_host": "example.com", "ssh_user": "user"}

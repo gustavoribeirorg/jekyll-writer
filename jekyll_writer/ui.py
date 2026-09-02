@@ -11,10 +11,7 @@ from jekyll_writer.frontmatter import (
     parse_front_matter,
     save_post
 )
-from jekyll_writer.images import (
-    is_fotolog_category,
-    process_and_copy_image
-)
+from jekyll_writer.images import process_and_copy_image
 from jekyll_writer.publisher import PublisherEngine
 
 ctk.set_appearance_mode("Dark")
@@ -480,20 +477,16 @@ class JekyllWriterApp(ctk.CTk):
 
         content = self.textbox.get("1.0", "end-1c")
         fm = parse_front_matter(content)
-        categories = fm.get("categories", "")
-        is_fotolog = is_fotolog_category(categories)
 
         try:
             html_snippet, dest_path = process_and_copy_image(
                 source_image_path=image_path,
-                jekyll_root=jekyll_root,
-                is_fotolog=is_fotolog
+                jekyll_root=jekyll_root
             )
             self.has_images = True
             # Insert at current cursor position
             self.textbox.insert("insert", f"\n{html_snippet}\n")
-            folder_name = "assets/fotolog" if is_fotolog else "assets/imagens"
-            self._append_log(f"Imagem copiada para {folder_name} e bloco figure inserido.", "success")
+            self._append_log("Imagem copiada para assets/imagens e bloco figure inserido.", "success")
         except Exception as e:
             messagebox.showerror("Erro ao Inserir Imagem", f"Falha ao copiar/inserir a imagem:\n{e}", parent=self)
 
@@ -584,11 +577,8 @@ class JekyllWriterApp(ctk.CTk):
         if not self.save_current_post():
             return
 
-        # Check category and images
+        # Check images
         content = self.textbox.get("1.0", "end-1c")
-        fm = parse_front_matter(content)
-        categories = fm.get("categories", "")
-        is_fotolog = is_fotolog_category(categories)
         has_images = self.has_images or ("<figure" in content) or ("<img" in content)
 
         jekyll_cmd = self.config.get("jekyll_command", "bundle exec jekyll build")
@@ -606,7 +596,6 @@ class JekyllWriterApp(ctk.CTk):
         def run_publish_thread():
             success = self.publisher.run_pipeline(
                 jekyll_root=jekyll_root,
-                is_fotolog=is_fotolog,
                 has_images=has_images,
                 jekyll_cmd=jekyll_cmd,
                 ssh_config=ssh_config

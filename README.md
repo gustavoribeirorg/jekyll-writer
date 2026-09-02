@@ -25,7 +25,7 @@ python main.py
 - 📄 **Front Matter Automático**: Ao iniciar ou clicar em *Novo*, cria o cabeçalho completo com `date` no formato exato com fuso horário local (`2026-09-01 12:30 -0300`) e posiciona o cursor em `title: `.
 - 💾 **Salvamento Inteligente (`YYYY-MM-DD-TITULO.md`)**: Gera o nome do arquivo limpo e padronizado e salva diretamente na pasta `_posts/` ou `posts/` do seu blog Jekyll.
 - 🖼️ **Inserção de Imagens e Extensão `.webp`**:
-  - Copia automaticamente a imagem selecionada para `assets/imagens/` (ou para `assets/fotolog/` se a categoria for `Fotolog`).
+  - Copia automaticamente a imagem selecionada para `assets/imagens/`.
   - Insere o bloco `<figure>` padronizado sempre apontando para a extensão `.webp`.
 - ⚙️ **Painel de Configurações**:
   - Seleção da pasta raiz do seu blog Jekyll no Windows.
@@ -35,10 +35,9 @@ python main.py
   - Botão para testar a conexão SSH antes de enviar.
 - 🚀 **Pipeline de Publicação Automatizado ("Enviar Publicação")**:
   1. Salva automaticamente o post atual.
-  2. Se a categoria for `Fotolog`, executa o motor embutido de Fotolog.
-  3. Se houver imagens no post, executa o motor embutido de otimização de imagens WebP.
-  4. Executa `bundle exec jekyll build` na pasta do blog.
-  5. Sincroniza apenas os arquivos novos/alterados em `_site/` para o servidor remoto via SSH/SFTP com cache inteligente.
+  2. Se houver imagens no post, executa o motor embutido de otimização de imagens WebP.
+  3. Executa `bundle exec jekyll build` na pasta do blog.
+  4. Sincroniza apenas os arquivos novos/alterados em `_site/` para o servidor remoto via SSH/SFTP com cache inteligente.
 - 📋 **Gaveta de Logs em Tempo Real**: Console retrátil com exibição linha por linha do progresso dos scripts, build do Jekyll e upload de arquivos.
 
 ---

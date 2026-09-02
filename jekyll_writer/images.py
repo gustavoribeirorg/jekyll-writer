@@ -1,14 +1,8 @@
 import os
 import shutil
 from pathlib import Path
+from typing import Tuple
 from jekyll_writer.frontmatter import slugify
-
-def is_fotolog_category(categories) -> bool:
-    if not categories:
-        return False
-    if isinstance(categories, list):
-        return any(str(c).strip().lower() == "fotolog" for c in categories)
-    return "fotolog" in str(categories).strip().lower()
 
 def format_caption_from_filename(filename: str) -> str:
     stem = Path(filename).stem
@@ -26,12 +20,12 @@ def generate_figure_html(web_path: str, caption: str) -> str:
         '</figure>'
     )
 
-def process_and_copy_image(source_image_path: str, jekyll_root: str, is_fotolog: bool) -> tuple[str, str]:
+def process_and_copy_image(source_image_path: str, jekyll_root: str, is_fotolog: bool = False) -> Tuple[str, str]:
     source = Path(source_image_path)
     stem_slug = slugify(source.stem)
     ext = source.suffix.lower()
 
-    dest_folder_rel = "assets/fotolog" if is_fotolog else "assets/imagens"
+    dest_folder_rel = "assets/imagens"
     dest_dir = os.path.join(jekyll_root, dest_folder_rel.replace("/", os.sep))
     os.makedirs(dest_dir, exist_ok=True)
 

@@ -10,7 +10,6 @@ import paramiko
 from typing import Callable, Optional, Dict, Any, Tuple
 
 from jekyll_writer.image_optimizer import optimize_images, normalize_name
-from jekyll_writer.fotolog import update_fotolog
 from jekyll_writer.frontmatter import slugify
 
 class PublisherEngine:
@@ -427,10 +426,10 @@ class PublisherEngine:
     def run_pipeline(
         self,
         jekyll_root: str,
-        is_fotolog: bool,
         has_images: bool,
         jekyll_cmd: str,
-        ssh_config: Dict[str, Any]
+        ssh_config: Dict[str, Any],
+        is_fotolog: bool = False
     ) -> bool:
         self._is_cancelled = False
         self.log("=========================================", "info")
@@ -441,15 +440,7 @@ class PublisherEngine:
             self.log(f"Erro: Pasta raiz do Jekyll não encontrada: '{jekyll_root}'", "error")
             return False
 
-        # 1. Scripts embutidos (executados diretamente em Python)
-        if is_fotolog:
-            self.log("📸 Executando atualização de Fotolog (embutido)...", "info")
-            try:
-                update_fotolog(jekyll_root, log_callback=self.log)
-            except Exception as e:
-                self.log(f"Erro ao atualizar Fotolog: {e}", "error")
-                return False
-
+        # 1. Otimização de imagens embutida
         if has_images:
             self.log("🖼️ Executando otimização de imagens (embutido)...", "info")
             try:
