@@ -1,13 +1,80 @@
+# Bytecode & Caches Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+
+# Ambientes Virtuais
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testes e Cobertura
 .pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# Dados Pessoais, Credenciais e Configurações Locais
+config.json
+.jekyll_writer_cache.json
+prompt.txt
+.env
+.env.*
+*.pem
+*.key
+*.pub
+id_rsa*
+
+# Logs e Arquivos Temporários
+*.log
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Sistema Operacional (Windows / macOS / Linux)
+Thumbs.db
+ehthumbs.db
+desktop.ini
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Editores e IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+
+# Artefatos de Build e Empacotamento
 build/
 dist/
 *.spec
-config.json
-.jekyll_writer_cache.json
-*.log
-prompt.txt
+*.egg-info/
+.eggs/
+eggs/
+
+# Jekyll Local (se executado na raiz)
+_site/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
+
+# Pastas de Teste e Clones de Blogs
 *-net/
 *.net/
+
+# Pastas de Trabalho de Agentes / SDD
+.superpowers/
