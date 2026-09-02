@@ -6,10 +6,10 @@ import shutil
 import tempfile
 import threading
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from fastapi import FastAPI, Depends, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -37,6 +37,11 @@ STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(status_code=204)
 
 
 @app.get("/", response_class=FileResponse)
@@ -105,6 +110,24 @@ def clear_cache(
     return {"success": True, "message": "Cache limpo com sucesso!"}
 
 
+_posts_metadata_cache: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+
+
+def _get_cached_post_front_matter(filepath: str) -> Dict[str, Any]:
+    try:
+        mtime = os.path.getmtime(filepath)
+        cached = _posts_metadata_cache.get(filepath)
+        if cached and cached[0] == mtime:
+            return cached[1]
+        with open(filepath, "r", encoding="utf-8") as f:
+            content = f.read()
+        fm = parse_front_matter(content)
+        _posts_metadata_cache[filepath] = (mtime, fm)
+        return fm
+    except Exception:
+        return {}
+
+
 @app.get("/api/posts")
 def list_posts(cfg: ConfigManager = Depends(get_config_manager)) -> List[Dict[str, Any]]:
     posts_dir = cfg.get_posts_dir()
@@ -118,12 +141,7 @@ def list_posts(cfg: ConfigManager = Depends(get_config_manager)) -> List[Dict[st
         filepath = os.path.join(posts_dir, entry)
         if not os.path.isfile(filepath):
             continue
-        try:
-            with open(filepath, "r", encoding="utf-8") as f:
-                content = f.read()
-            fm = parse_front_matter(content)
-        except Exception:
-            fm = {}
+        fm = _get_cached_post_front_matter(filepath)
 
         title = fm.get("title")
         if not title:
