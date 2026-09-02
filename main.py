@@ -1,16 +1,9 @@
-import sys
-import os
+import uvicorn
 
-# Ensure current dir is in sys.path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from jekyll_writer.config import ConfigManager
-from jekyll_writer.ui import JekyllWriterApp
 
 def main():
-    config = ConfigManager()
-    app = JekyllWriterApp(config_manager=config)
-    app.mainloop()
+    uvicorn.run("jekyll_writer.web:app", host="0.0.0.0", port=8000, reload=True)
+
 
 if __name__ == "__main__":
     main()

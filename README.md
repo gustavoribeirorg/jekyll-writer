@@ -1,100 +1,87 @@
-# ✍️ Jekyll Writer (Desktop & Web)
+# ✍️ Jekyll Writer Web (Self-Hosted)
 
-Sistema para redação, gerenciamento e publicação automatizada em blogs Jekyll no Windows, disponível como aplicativo Desktop nativo ou Servidor Web autohospedado para acesso local e remoto.
+Sistema web autohospedado, moderno e responsivo para redação, gerenciamento e publicação automatizada em blogs Jekyll.
 
----
-
-## 🚀 Opções de Execução
-
-### 1. Standalone Desktop (Interface Nativa Tkinter)
-Ideal para uso direto e exclusivo na máquina local com zero dependências externas:
-- **Executável compilado**: Abra a pasta `dist/` e dê um duplo clique em [`JekyllWriter.exe`](dist/JekyllWriter.exe).
-- **Script rápido**: Dê um duplo clique em [`run.bat`](run.bat) na raiz do projeto.
-- **Via terminal**: `python main.py`
-
-### 2. Versão Web Autohospedada (FastAPI + Modern UI)
-Ideal para redigir a partir de qualquer dispositivo (desktop, notebook, tablet ou smartphone) com interface responsiva dark/light mode e sincronização instantânea:
-- **Script rápido**: Dê um duplo clique em [`run_web.bat`](run_web.bat) (inicia o servidor e abre o navegador automaticamente).
-- **Via terminal**: `python web.py` (ou `uvicorn web:app --host 0.0.0.0 --port 8000`)
+Permite redigir seus textos, gerenciar imagens e publicar seu blog a partir de qualquer dispositivo (computador, notebook, tablet ou smartphone) na sua rede local ou remotamente via Cloudflare Tunnel.
 
 ---
 
-## 🌐 Acesso à Versão Web
+## 🚀 Como Executar
 
-O servidor web é executado por padrão em `0.0.0.0:8000`, permitindo conexões locais, na rede interna e através de túneis seguros:
+### 1. Pré-requisitos
+Instale as dependências Python necessárias:
+```powershell
+pip install -r requirements.txt
+```
 
-### 🏠 1. Acesso Local (Mesmo Computador)
-- Abra o navegador e acesse: **`http://localhost:8000`** (ou `http://127.0.0.1:8000`).
+### 2. Inicialização Rápida
+- **No Windows (1 clique)**: Dê um duplo clique em [`run.bat`](run.bat) (inicia o servidor e abre o navegador automaticamente).
+- **Via Terminal**:
+  ```powershell
+  python main.py
+  ```
+  *(O servidor iniciará escutando em `0.0.0.0:8000`)*.
 
-### 📱 2. Acesso em Rede Local (Wi-Fi / LAN)
-- Descubra o endereço IP local do seu computador Windows (via `ipconfig`, ex: `192.168.1.100`).
-- No seu tablet, smartphone ou outro computador conectado ao mesmo Wi-Fi, acesse:
-  **`http://<IP-DO-COMPUTADOR>:8000`** (ex: `http://192.168.1.100:8000`).
-- Permite escrever e publicar seus posts diretamente do celular ou tablet.
+---
 
-### ☁️ 3. Acesso Externo Seguro via Cloudflare Tunnel
-Você pode expor sua instância do Jekyll Writer Web para a internet de forma segura, sem abrir portas no roteador (sem port forwarding):
-1. **Configuração do Túnel**:
-   No Cloudflare Zero Trust / Cloudflare Tunnel (`cloudflared`), crie um túnel ou adicione um Public Hostname:
-   - **Subdomínio**: ex: `editor.seudominio.net`
-   - **Tipo de Serviço**: `HTTP`
-   - **URL de Destino**: `localhost:8000` (ou `127.0.0.1:8000`)
-2. **Streaming em Tempo Real (SSE)**:
-   - Os logs do processo de build e publicação utilizam Server-Sent Events (SSE) com cabeçalhos anti-buffering (`X-Accel-Buffering: no` e `Cache-Control: no-cache`), garantindo que o progresso linha por linha seja exibido fluidamente mesmo através do Cloudflare Proxy / Tunnel.
-3. **Segurança Zero-Persistence**:
-   - **Zero gravação de senhas em disco**: As senhas SSH são fornecidas em tempo de execução na requisição e trafegadas somente em memória durante a sessão de upload, nunca sendo salvas no arquivo `config.json` ou em logs.
-   - Recomenda-se habilitar autenticação via Cloudflare Access (One-Time PIN por e-mail ou OAuth) no painel do Cloudflare Zero Trust para proteger o subdomínio.
+## 🌐 Como Acessar
+
+### 🏠 1. Acesso Local (No mesmo computador)
+- Abra o navegador em: **`http://localhost:8000`**
+
+### 📱 2. Acesso em Rede Local (Wi-Fi / Celular / Tablet)
+1. Descubra o IP local do computador onde o servidor está rodando (via `ipconfig`, ex: `192.168.1.50`).
+2. No seu smartphone ou tablet conectado ao mesmo Wi-Fi, acesse:
+   **`http://192.168.1.50:8000`**
+3. Você poderá redigir, formatar e publicar diretamente do celular com interface responsiva!
+
+### ☁️ 3. Acesso Externo via Cloudflare Tunnel
+Você pode expor seu Jekyll Writer com HTTPS gratuito e sem abrir portas no roteador:
+1. No painel do **Cloudflare Zero Trust** (Tunnels), aponte um subdomínio para seu servidor local:
+   - **Hostname**: `editor.seudominio.net`
+   - **Service**: `HTTP -> localhost:8000`
+2. **Streaming em Tempo Real (SSE)**: O servidor já envia cabeçalhos anti-buffering (`X-Accel-Buffering: no` e `Cache-Control: no-cache`), garantindo que os logs do Jekyll e do envio SFTP apareçam linha a linha em tempo real mesmo através do proxy da Cloudflare.
+3. **Segurança Zero-Persistence**: Nenhuma senha SSH é salva no disco ou no `config.json`. A senha é solicitada no modal de envio e trafega exclusivamente na memória durante a publicação.
 
 ---
 
 ## ✨ Funcionalidades
 
-- 📄 **Front Matter Automático**: Cria cabeçalhos padronizados com fuso horário local (`date: YYYY-MM-DD HH:MM -0300`), título, categorias, tags, autor e meta descrição.
-- 💾 **Gerenciamento e Salvamento Inteligente (`YYYY-MM-DD-TITULO.md`)**:
-  - Salva e lê diretamente da pasta `_posts/` ou `posts/` configurada.
-  - Na versão Web: lista lateral com barra de busca para carregar, editar ou criar novos posts instantaneamente.
-- 🖼️ **Inserção e Otimização de Imagens WebP**:
-  - Upload/cópia automática para `assets/imagens/` com geração de HTML `<figure>` padronizado apontando para `.webp`.
-  - Motor embutido de compressão e conversão WebP executado antes de cada publicação.
-- ⚙️ **Painel de Configurações**:
-  - Pasta raiz do blog Jekyll local.
-  - Servidor SSH (host, usuário, porta e destino remoto, ex: `~/blog/_site`).
-  - Suporte a conexões diretas ou via `cloudflared access ssh` configurado no Windows OpenSSH.
-  - Botão para testar conexão SSH com feedback imediato.
-  - Limpeza do cache de sincronização de arquivos.
+- 📄 **Barra Lateral de Posts (Sidebar)**: Lista todos os artigos existentes da pasta `_posts/`, ordenados por data decrescente, com campo de busca em tempo real e botão de recolher/expandir.
+- ✍️ **Editor em Área de Texto**: Leve, monoespaçado, com atalhos de teclado (`Ctrl+S`) e barra de formatação (Negrito, Itálico, Títulos H2/H3, Lista, Links).
+- 🖼️ **Upload e Otimização Direta de Fotos (`🖼️ Imagem`)**:
+  - Selecione imagens pelo navegador;
+  - São salvas automaticamente em `assets/imagens/`;
+  - Convertidas para `.webp`;
+  - Bloco `<figure>` é inserido na posição exata do cursor.
 - 🚀 **Pipeline de Publicação Automatizado ("Enviar Publicação")**:
   1. Salva automaticamente o post atual.
-  2. Otimiza novas imagens do blog para formato WebP.
-  3. Executa a compilação do Jekyll (`bundle exec jekyll build`) utilizando o ambiente de build Ruby/Jekyll configurado ou binários portáteis embutidos.
-  4. Sincroniza via SFTP apenas arquivos novos ou alterados em `_site/` com cache inteligente SHA-256.
-- 📋 **Gaveta de Logs em Tempo Real**: Terminal retrátil no rodapé exibindo a saída detalhada do pipeline em tempo real (SSE na versão Web).
+  2. Otimiza imagens para formato WebP.
+  3. Compila o blog Jekyll (`bundle exec jekyll build`).
+  4. Sincroniza via SFTP apenas arquivos novos ou alterados em `_site/` com cache inteligente MD5.
+- 📋 **Terminal de Logs em Tempo Real**: Gaveta retrátil no rodapé exibindo a saída do Jekyll e da transferência via Server-Sent Events (SSE).
+- ⚙️ **Configurações e Limpeza de Cache**: Ajuste o caminho da pasta do blog, comando Jekyll, usuário SSH e limpe a memória de sincronização a qualquer momento.
 
 ---
 
-## 🔌 Endpoints da API REST (Versão Web)
+## 🔌 API REST Documentada
 
-A versão web expõe uma API REST moderna e documentada automaticamente via Swagger UI (`http://localhost:8000/docs`):
+A documentação interativa da API (Swagger UI) fica disponível automaticamente em:
+👉 **`http://localhost:8000/docs`**
 
 | Método | Endpoint | Descrição |
 |---|---|---|
-| `GET` | `/api/config` | Retorna as configurações atuais (sem expor senhas). |
-| `POST` | `/api/config` | Salva as configurações locais em `config.json`. |
-| `POST` | `/api/config/clear-cache` | Limpa o arquivo de cache de sincronização SFTP. |
-| `GET` | `/api/posts` | Lista todos os posts markdown encontrados na pasta `_posts/`. |
-| `GET` | `/api/posts/{filename}` | Carrega o conteúdo bruto e front matter de um post específico. |
-| `POST` | `/api/posts` | Salva um post (novo ou existente), gerando o filename canônico. |
-| `GET` | `/api/template` | Retorna o template inicial de Front Matter com data e fuso atualizados. |
-| `POST` | `/api/images/upload` | Faz upload de uma imagem para `assets/imagens/` e retorna o snippet `<figure>`. |
-| `POST` | `/api/publish/test-ssh` | Valida credenciais e conectividade com o servidor SSH remoto. |
-| `POST` | `/api/publish` | Executa o pipeline de build e deploy com streaming SSE dos logs em tempo real. |
-
----
-
-## 🛠️ Recompilação do Executável Desktop
-
-Se você fizer modificações no código-fonte desktop e quiser gerar um novo `.exe`, basta executar:
-[`build_exe.bat`](build_exe.bat) (ou `python -m PyInstaller jekyll_writer.spec`).
-O executável standalone será gerado em `dist/JekyllWriter.exe`.
+| `GET` | `/` | Interface web principal |
+| `GET` | `/api/posts` | Lista posts de `_posts/` ordenados por data |
+| `GET` | `/api/posts/{filename}` | Carrega conteúdo de um post |
+| `POST` | `/api/posts` | Salva post (novo ou existente) |
+| `GET` | `/api/posts/template/new` | Gera modelo com front matter e fuso horário local |
+| `POST` | `/api/images/upload` | Upload de fotos, conversão para WebP e tag `<figure>` |
+| `POST` | `/api/ssh/test` | Valida credenciais e conectividade SSH sem salvar senha |
+| `POST` | `/api/publish` | Executa build e deploy com streaming SSE de logs |
+| `GET` | `/api/config` | Consulta configurações locais (sem senhas) |
+| `POST` | `/api/config` | Salva preferências locais |
+| `POST` | `/api/config/clear-cache` | Limpa o arquivo de cache de sincronização |
 
 ---
 
