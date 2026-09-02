@@ -249,7 +249,16 @@ class PublisherEngine:
                     pass
             raise
 
-    def test_ssh_connection(self, ssh_config: Dict[str, Any]) -> Tuple[bool, str]:
+    def test_ssh_connection(self, ssh_config: Any, port: int = 22, user: str = "", password: str = "") -> Tuple[bool, str]:
+        if isinstance(ssh_config, str):
+            ssh_config = {
+                "ssh_host": ssh_config,
+                "ssh_port": port,
+                "ssh_user": user,
+                "ssh_password": password,
+            }
+        elif not isinstance(ssh_config, dict):
+            ssh_config = {}
         host = ssh_config.get("ssh_host", "").strip()
         user = ssh_config.get("ssh_user", "").strip()
         if not host or not user:

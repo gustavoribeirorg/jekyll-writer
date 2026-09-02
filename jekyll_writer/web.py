@@ -1,11 +1,15 @@
+import json
 import os
+import queue
 import re
 import shutil
 import tempfile
+import threading
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, Depends, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from jekyll_writer.config import ConfigManager
@@ -32,6 +36,13 @@ app.add_middleware(
 class PostPayload(BaseModel):
     content: str
     current_filename: Optional[str] = None
+
+
+class SSHCredentials(BaseModel):
+    ssh_host: str
+    ssh_port: int = 22
+    ssh_user: str
+    ssh_password: str
 
 
 def get_config_manager() -> ConfigManager:
@@ -226,5 +237,80 @@ def upload_image(
         raise HTTPException(status_code=500, detail=f"Erro ao processar imagem: {e}")
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@app.post("/api/ssh/test")
+def test_ssh(data: SSHCredentials) -> Dict[str, Any]:
+    engine = PublisherEngine()
+    ssh_config = {
+        "ssh_host": data.ssh_host.strip(),
+        "ssh_port": data.ssh_port,
+        "ssh_user": data.ssh_user.strip(),
+        "ssh_password": data.ssh_password,
+    }
+    success, message = engine.test_ssh_connection(ssh_config)
+    return {"success": success, "message": message}
+
+
+@app.post("/api/publish")
+def publish_post(
+    data: SSHCredentials,
+    cfg: ConfigManager = Depends(get_config_manager),
+):
+    jekyll_root = cfg.get("jekyll_root")
+    jekyll_cmd = cfg.get("jekyll_command", "bundle exec jekyll build")
+    if not jekyll_root or not os.path.isdir(jekyll_root):
+        raise HTTPException(status_code=400, detail="Diretório do Jekyll não configurado")
+
+    ssh_config = {
+        "ssh_host": data.ssh_host.strip(),
+        "ssh_port": data.ssh_port,
+        "ssh_user": data.ssh_user.strip(),
+        "ssh_password": data.ssh_password,
+        "ssh_remote_path": cfg.get("ssh_remote_path", "").strip() or "~/blog/_site",
+    }
+
+    def event_stream():
+        q: queue.Queue = queue.Queue()
+        done_sentinel = object()
+
+        def log_callback(message: str, level: str = "info"):
+            q.put({"level": level, "message": message})
+
+        def worker():
+            try:
+                engine = PublisherEngine(log_callback=log_callback)
+                success = engine.run_pipeline(
+                    jekyll_root=jekyll_root,
+                    has_images=True,
+                    jekyll_cmd=jekyll_cmd,
+                    ssh_config=ssh_config,
+                )
+            except Exception as e:
+                log_callback(f"Erro inesperado: {e}", "error")
+                success = False
+            finally:
+                q.put({"event": "done", "success": bool(success)})
+                q.put(done_sentinel)
+
+        t = threading.Thread(target=worker, daemon=True)
+        t.start()
+
+        while True:
+            item = q.get()
+            if item is done_sentinel:
+                break
+            yield f"data: {json.dumps(item, ensure_ascii=False)}\n\n"
+
+    headers = {
+        "X-Accel-Buffering": "no",
+        "Cache-Control": "no-cache",
+    }
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers=headers,
+    )
+
 
 
