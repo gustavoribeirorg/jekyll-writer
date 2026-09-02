@@ -114,10 +114,12 @@
     }
     ```
 
-### 3.3 Publicação e Streaming de Logs (SSE)
-- **`GET /api/publish/stream`**:
-  - Abre uma conexão **Server-Sent Events** (`text/event-stream`).
-  - Executa `PublisherEngine.run_pipeline(...)` em background enquanto envia cada linha emitida por `log_callback` para o cliente:
+### 3.3 Publicação e Streaming de Logs (SSE com Segurança Zero-Persistence)
+- **Política de Senhas**: A senha do SSH nunca é gravada em disco (`config.json`). O usuário sempre informa o host/IP, porta, usuário e senha diretamente no momento da ação (modal de publicação ou teste).
+- **`POST /api/publish`**:
+  - Recebe `{ "ssh_host": "...", "ssh_port": 22, "ssh_user": "...", "ssh_password": "..." }`.
+  - Inicia o pipeline de compilação Jekyll e upload SFTP em background com credenciais exclusivamente em memória RAM temporária.
+  - Retorna uma chave de sessão ou transmite via **Server-Sent Events** (`text/event-stream`) com cabeçalhos `X-Accel-Buffering: no` e `Cache-Control: no-cache` (otimizado para Cloudflare Tunnel):
     ```text
     data: {"level": "info", "message": "🔨 Compilando blog Jekyll..."}
 
@@ -130,12 +132,13 @@
 
 ### 3.4 Conexão SSH & Configurações
 - **`POST /api/ssh/test`**:
+  - Recebe `{ "ssh_host": "...", "ssh_port": 22, "ssh_user": "...", "ssh_password": "..." }`.
   - Testa conexão SSH com os dados informados via `PublisherEngine.test_ssh_connection`.
   - Retorna `{ "success": true, "message": "Conexão estabelecida com sucesso!" }` ou erro.
 - **`GET /api/config`**:
-  - Retorna campos de configuração atuais (omitindo senha real ou enviando mascarada).
+  - Retorna campos gerais persistentes (`jekyll_root`, `jekyll_command`, `ssh_remote_path`, `ssh_user`). Nunca retorna ou armazena senhas.
 - **`POST /api/config`**:
-  - Atualiza e persiste `config.json`.
+  - Atualiza e persiste as preferências gerais em `config.json` (sem campos de senha).
 - **`POST /api/config/clear-cache`**:
   - Remove `.jekyll_writer_cache.json` chamando `PublisherEngine.clear_sync_cache`.
 
