@@ -52,6 +52,7 @@ def test_static_css_served(client):
     assert ".log-warning" in css
     assert ".log-error" in css
     assert ".modal-backdrop" in css
+    assert ".post-item-filename" in css
 
 
 def test_static_js_served(client):
@@ -64,3 +65,4 @@ def test_static_js_served(client):
     assert "/api/publish" in js
     assert "/api/images/upload" in js
     assert "/api/ssh/test" in js
+    assert "post-item-filename" in js

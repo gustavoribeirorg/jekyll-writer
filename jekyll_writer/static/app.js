@@ -115,6 +115,34 @@
     }, duration);
   }
 
+  function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise((resolve, reject) => {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '-9999px';
+        textarea.setAttribute('readonly', '');
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (successful) {
+          resolve();
+        } else {
+          reject(new Error('Falha ao copiar'));
+        }
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
   function setDirty(isDirty) {
     state.isDirty = isDirty;
     if (!el.saveStatus) return;
@@ -369,11 +397,30 @@
 
       item.innerHTML = `
         <div class="post-item-title" title="${escapeHtml(post.title)}">${escapeHtml(post.title)}</div>
+        <div class="post-item-filename-row">
+          <span class="post-item-filename" title="${escapeHtml(post.filename)}">${escapeHtml(post.filename)}</span>
+          <button type="button" class="btn-copy-filename" title="Copiar nome do arquivo" aria-label="Copiar nome do arquivo">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+        </div>
         <div class="post-item-meta">
           <span class="post-item-date">${escapeHtml(post.date || '')}</span>
           <span class="post-item-category" title="${escapeHtml(post.categories || '')}">${escapeHtml(post.categories || '')}</span>
         </div>
       `;
+
+      const copyBtn = item.querySelector('.btn-copy-filename');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          copyToClipboard(post.filename)
+            .then(() => showToast(`Copiado: ${post.filename}`, 'info'))
+            .catch(() => showToast('Falha ao copiar nome do arquivo', 'error'));
+        });
+      }
 
       item.addEventListener('click', () => {
         if (state.currentFilename === post.filename) return;
