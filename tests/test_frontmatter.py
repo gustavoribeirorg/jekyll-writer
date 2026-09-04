@@ -6,6 +6,7 @@ from jekyll_writer.frontmatter import (
     slugify,
     parse_front_matter,
     generate_post_filename,
+    sanitize_custom_filename,
     save_post
 )
 
@@ -43,6 +44,22 @@ def test_generate_post_filename():
     filename = generate_post_filename("Meu Primeiro Post", "2026-09-01 12:30 -0300")
     assert filename == "2026-09-01-meu-primeiro-post.md"
 
+    # With explicit slug
+    filename_slug = generate_post_filename("Meu Titulo Muito Longo", "2026-09-01", slug="titulo-curto")
+    assert filename_slug == "2026-09-01-titulo-curto.md"
+
+def test_sanitize_custom_filename():
+    # Only slug
+    assert sanitize_custom_filename("sistema-com-ia", date_str="2026-09-04") == "2026-09-04-sistema-com-ia.md"
+    # Full filename with date and .md
+    assert sanitize_custom_filename("2026-09-04-sistema-com-ia.md") == "2026-09-04-sistema-com-ia.md"
+    # Full filename with date without .md
+    assert sanitize_custom_filename("2026-09-04-sistema-com-ia") == "2026-09-04-sistema-com-ia.md"
+    # With spaces and accents
+    assert sanitize_custom_filename("sistema com inteligência", date_str="2026-09-04") == "2026-09-04-sistema-com-inteligencia.md"
+    # Path traversal attempt is sanitized
+    assert sanitize_custom_filename("../../etc/sistema.md", date_str="2026-09-04") == "2026-09-04-sistema.md"
+
 def test_save_post(tmp_path):
     posts_dir = tmp_path / "_posts"
     posts_dir.mkdir()
@@ -63,3 +80,34 @@ Texto legal
     assert saved_path_again == saved_path
     with open(saved_path, "r", encoding="utf-8") as f:
         assert "Nova linha" in f.read()
+
+def test_save_post_custom_filename_and_rename(tmp_path):
+    posts_dir = tmp_path / "_posts"
+    posts_dir.mkdir()
+    content = """---
+title: Fazendo um sistema com IA
+date: 2026-09-04 10:00:00 -0300
+layout: post
+---
+Conteudo
+"""
+    # 1. Save with custom filename (short slug)
+    saved_path = save_post(
+        content,
+        str(posts_dir),
+        custom_filename="sistema-com-ia"
+    )
+    assert os.path.basename(saved_path) == "2026-09-04-sistema-com-ia.md"
+    assert os.path.exists(saved_path)
+
+    # 2. Rename existing post by changing custom_filename
+    renamed_path = save_post(
+        content,
+        str(posts_dir),
+        current_filepath=saved_path,
+        custom_filename="2026-09-04-sistema-ia-v2.md"
+    )
+    assert os.path.basename(renamed_path) == "2026-09-04-sistema-ia-v2.md"
+    assert os.path.exists(renamed_path)
+    # Old file should have been removed
+    assert not os.path.exists(saved_path)

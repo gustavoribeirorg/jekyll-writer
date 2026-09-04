@@ -160,3 +160,44 @@ def test_get_template(client):
     assert "template" in data
     assert "title:" in data["template"]
     assert "layout: post" in data["template"]
+
+
+def test_save_post_with_custom_filename(client, tmp_path):
+    post_content = "---\ntitle: Fazendo um sistema com IA\ndate: 2026-09-04 12:00:00 -0300\nlayout: post\n---\nCorpo."
+    payload = {
+        "content": post_content,
+        "custom_filename": "sistema-com-ia"
+    }
+
+    response = client.post("/api/posts", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert data["filename"] == "2026-09-04-sistema-com-ia.md"
+    assert os.path.exists(data["path"])
+
+    saved_file = tmp_path / "_posts" / "2026-09-04-sistema-com-ia.md"
+    assert saved_file.exists()
+
+
+def test_save_post_rename_via_api(client, tmp_path):
+    posts_dir = tmp_path / "_posts"
+    initial_file = posts_dir / "2026-09-04-antigo.md"
+    initial_file.write_text("Conteudo inicial", encoding="utf-8")
+
+    updated_content = "---\ntitle: Titulo Renomeado\ndate: 2026-09-04\n---\nConteudo atualizado"
+    payload = {
+        "content": updated_content,
+        "current_filename": "2026-09-04-antigo.md",
+        "custom_filename": "2026-09-04-novo.md",
+    }
+
+    response = client.post("/api/posts", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert data["filename"] == "2026-09-04-novo.md"
+
+    # New file exists, old file was removed
+    assert (posts_dir / "2026-09-04-novo.md").exists()
+    assert not (posts_dir / "2026-09-04-antigo.md").exists()

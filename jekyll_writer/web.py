@@ -65,6 +65,7 @@ def serve_index():
 class PostPayload(BaseModel):
     content: str
     current_filename: Optional[str] = None
+    custom_filename: Optional[str] = None
 
 
 class SSHCredentials(BaseModel):
@@ -269,6 +270,7 @@ def save_post_endpoint(
             content=payload.content,
             posts_dir=posts_dir,
             current_filepath=current_filepath,
+            custom_filename=payload.custom_filename,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao salvar post: {e}")

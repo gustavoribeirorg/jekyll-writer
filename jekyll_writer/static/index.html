@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jekyll Writer</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260904_6">
+  <link rel="stylesheet" href="/static/style.css?v=20260904_7">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -61,6 +61,13 @@
 
       <!-- Editor Area -->
       <main class="main-editor-area">
+        <!-- Post Filename Bar -->
+        <div class="editor-filename-bar">
+          <label for="postCustomFilename" class="filename-bar-label" title="Nome do arquivo em _posts">Arquivo:</label>
+          <input type="text" id="postCustomFilename" class="filename-bar-input" placeholder="ex: 2026-09-04-sistema-com-ia.md (ou deixe vazio para gerar do título)" title="Nome customizado do arquivo em _posts/">
+          <button type="button" id="btnAutoFilename" class="btn-filename-auto" title="Gerar nome automaticamente a partir do título">Auto</button>
+        </div>
+
         <!-- Formatting Toolbar -->
         <div class="editor-toolbar" role="toolbar" aria-label="Barra de Formatação">
           <div class="toolbar-group">
@@ -70,17 +77,50 @@
             <button id="btnItalic" class="tool-btn" data-action="italic" title="Itálico (*texto*)">
               <em>I</em>
             </button>
+            <button id="btnUnderline" class="tool-btn" data-action="underline" title="Sublinhado (&lt;u&gt;texto&lt;/u&gt;)">
+              <u>U</u>
+            </button>
+            <button id="btnStrike" class="tool-btn" data-action="strike" title="Tachado (~~texto~~)">
+              <s>S</s>
+            </button>
+            <button id="btnInlineCode" class="tool-btn" data-action="code" title="Código Inline (`código`)">
+              &lt;/&gt;
+            </button>
+          </div>
+
+          <div class="toolbar-divider"></div>
+
+          <div class="toolbar-group">
             <button id="btnH2" class="tool-btn" data-action="h2" title="Título 2 (## Título)">
               H2
             </button>
             <button id="btnH3" class="tool-btn" data-action="h3" title="Subtítulo 3 (### Subtítulo)">
               H3
             </button>
-            <button id="btnList" class="tool-btn" data-action="list" title="Lista (- item)">
-              • Lista
+            <button id="btnBlockquote" class="tool-btn" data-action="blockquote" title="Citação (&gt; citação)">
+              &ldquo; Citação
             </button>
-            <button id="btnLink" class="tool-btn" data-action="link" title="Link ([texto](url))">
+          </div>
+
+          <div class="toolbar-divider"></div>
+
+          <div class="toolbar-group">
+            <button id="btnList" class="tool-btn" data-action="unordered-list" title="Lista não ordenada (- item)">
+              &bull; Lista
+            </button>
+            <button id="btnOrderedList" class="tool-btn" data-action="ordered-list" title="Lista ordenada (1. item)">
+              1. Lista
+            </button>
+          </div>
+
+          <div class="toolbar-divider"></div>
+
+          <div class="toolbar-group">
+            <button id="btnLink" class="tool-btn" data-action="link" title="Link externo ([texto](url))">
               Link
+            </button>
+            <button id="btnInternalLink" class="tool-btn" data-action="internal-link" title="Link interno Jekyll ([texto]({% post_url post %}))">
+              Link Interno
             </button>
           </div>
 
@@ -259,9 +299,45 @@
     </div>
   </div>
 
+  <!-- Internal Link Modal -->
+  <div id="internalLinkModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="internalLinkModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="internalLinkModalTitle" class="modal-title">Inserir Link Interno Jekyll</h2>
+        <button id="btnCloseInternalLinkX" class="icon-btn" aria-label="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="internalLinkText">Texto visível do link:</label>
+          <input type="text" id="internalLinkText" placeholder="ex: Veja este post">
+        </div>
+
+        <div class="form-group">
+          <label for="internalLinkSlug">Identificador do post (sem extensão .md):</label>
+          <input type="text" id="internalLinkSlug" placeholder="ex: 2026-09-04-sistema-com-ia">
+          <small class="form-help">Gera o formato: [Texto]({% post_url identificador %})</small>
+        </div>
+
+        <div class="form-group">
+          <label>Selecione um post existente:</label>
+          <div class="search-box">
+            <input type="text" id="internalLinkSearch" placeholder="Filtrar posts existentes...">
+          </div>
+          <div id="internalLinkPostList" class="internal-link-post-list"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelInternalLink" class="btn btn-ghost" type="button">Cancelar</button>
+        <button id="btnConfirmInternalLink" class="btn btn-primary" type="button">
+          <span>Inserir Link</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
-  <script src="/static/app.js?v=20260904_6"></script>
+  <script src="/static/app.js?v=20260904_7"></script>
 </body>
 </html>

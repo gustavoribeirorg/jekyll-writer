@@ -32,12 +32,20 @@
 
     // Editor & Toolbar
     postEditor: document.getElementById('postEditor'),
+    postCustomFilename: document.getElementById('postCustomFilename'),
+    btnAutoFilename: document.getElementById('btnAutoFilename'),
     btnBold: document.getElementById('btnBold'),
     btnItalic: document.getElementById('btnItalic'),
+    btnUnderline: document.getElementById('btnUnderline'),
+    btnStrike: document.getElementById('btnStrike'),
+    btnInlineCode: document.getElementById('btnInlineCode'),
     btnH2: document.getElementById('btnH2'),
     btnH3: document.getElementById('btnH3'),
+    btnBlockquote: document.getElementById('btnBlockquote'),
     btnList: document.getElementById('btnList'),
+    btnOrderedList: document.getElementById('btnOrderedList'),
     btnLink: document.getElementById('btnLink'),
+    btnInternalLink: document.getElementById('btnInternalLink'),
     imageFileInput: document.getElementById('imageFileInput'),
 
     // Status Bar
@@ -85,6 +93,16 @@
     pubSshPort: document.getElementById('pubSshPort'),
     pubSshUser: document.getElementById('pubSshUser'),
     pubSshPassword: document.getElementById('pubSshPassword'),
+
+    // Internal Link Modal
+    internalLinkModal: document.getElementById('internalLinkModal'),
+    btnCloseInternalLinkX: document.getElementById('btnCloseInternalLinkX'),
+    btnCancelInternalLink: document.getElementById('btnCancelInternalLink'),
+    btnConfirmInternalLink: document.getElementById('btnConfirmInternalLink'),
+    internalLinkText: document.getElementById('internalLinkText'),
+    internalLinkSlug: document.getElementById('internalLinkSlug'),
+    internalLinkSearch: document.getElementById('internalLinkSearch'),
+    internalLinkPostList: document.getElementById('internalLinkPostList'),
 
     // Toast
     toastContainer: document.getElementById('toastContainer'),
@@ -189,8 +207,52 @@
   }
 
   function updateFilenameDisplay(filename) {
-    if (!el.currentFilenameDisplay) return;
-    el.currentFilenameDisplay.textContent = filename || 'sem-titulo.md';
+    if (el.currentFilenameDisplay) {
+      el.currentFilenameDisplay.textContent = filename || 'sem-titulo.md';
+    }
+  }
+
+  function autoGenerateFilenameFromContent() {
+    if (!el.postEditor || !el.postCustomFilename) return;
+    const content = el.postEditor.value;
+    let title = '';
+    let date = '';
+    const lines = content.split('\n');
+    let inFm = false;
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed === '---') {
+        if (inFm) break;
+        inFm = true;
+        continue;
+      }
+      if (inFm) {
+        if (trimmed.startsWith('title:')) {
+          title = trimmed.replace('title:', '').trim().replace(/^["']|["']$/g, '');
+        } else if (trimmed.startsWith('date:')) {
+          const match = trimmed.match(/\d{4}-\d{2}-\d{2}/);
+          if (match) date = match[0];
+        }
+      }
+    }
+    if (!date) {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      date = `${year}-${month}-${day}`;
+    }
+    const slug = (title || 'sem-titulo')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'sem-titulo';
+
+    el.postCustomFilename.value = `${date}-${slug}.md`;
+    setDirty(true);
+    showToast('Nome de arquivo gerado a partir do título!', 'info');
   }
 
   // --- API Calls & Core Operations ---
@@ -446,6 +508,9 @@
       state.currentFilename = data.filename;
       el.postEditor.value = data.content;
 
+      if (el.postCustomFilename) {
+        el.postCustomFilename.value = data.filename;
+      }
       updateFilenameDisplay(data.filename);
       setDirty(false);
       updateWordCount();
@@ -468,6 +533,9 @@
 
       state.currentFilename = null;
       el.postEditor.value = data.template;
+      if (el.postCustomFilename) {
+        el.postCustomFilename.value = '';
+      }
       updateFilenameDisplay('sem-titulo.md');
       setDirty(false);
       updateWordCount();
@@ -486,11 +554,14 @@
       return;
     }
 
+    const customFilename = el.postCustomFilename ? el.postCustomFilename.value.trim() : '';
+
     setSaving(true);
 
     const payload = {
       content: content,
       current_filename: state.currentFilename,
+      custom_filename: customFilename,
     };
 
     try {
@@ -506,6 +577,9 @@
       }
 
       state.currentFilename = data.filename;
+      if (el.postCustomFilename) {
+        el.postCustomFilename.value = data.filename;
+      }
       updateFilenameDisplay(data.filename);
       setDirty(false);
       showToast('Post salvo com sucesso!', 'success');
@@ -517,6 +591,8 @@
   }
 
   // --- Editor Formatting Helpers ---
+
+  let savedEditorSelection = { start: 0, end: 0, text: '' };
 
   function applyFormatting(action) {
     if (!el.postEditor) return;
@@ -550,6 +626,36 @@
         }
         break;
 
+      case 'underline':
+        if (selected) {
+          replacement = `<u>${selected}</u>`;
+          cursorOffset = replacement.length;
+        } else {
+          replacement = '<u>texto</u>';
+          cursorOffset = 3;
+        }
+        break;
+
+      case 'strike':
+        if (selected) {
+          replacement = `~~${selected}~~`;
+          cursorOffset = replacement.length;
+        } else {
+          replacement = '~~texto~~';
+          cursorOffset = 2;
+        }
+        break;
+
+      case 'code':
+        if (selected) {
+          replacement = `\`${selected}\``;
+          cursorOffset = replacement.length;
+        } else {
+          replacement = '`código`';
+          cursorOffset = 1;
+        }
+        break;
+
       case 'h2':
         if (selected) {
           replacement = `\n## ${selected}\n`;
@@ -568,12 +674,36 @@
         cursorOffset = replacement.length;
         break;
 
+      case 'blockquote':
+        if (selected) {
+          const lines = selected.split('\n').map((l) => (l.startsWith('> ') ? l : `> ${l}`));
+          replacement = lines.join('\n');
+        } else {
+          replacement = '> citação\n';
+        }
+        cursorOffset = replacement.length;
+        break;
+
       case 'list':
+      case 'unordered-list':
         if (selected) {
           const lines = selected.split('\n').map((l) => (l.startsWith('- ') ? l : `- ${l}`));
           replacement = lines.join('\n');
         } else {
           replacement = '- item\n';
+        }
+        cursorOffset = replacement.length;
+        break;
+
+      case 'ordered-list':
+        if (selected) {
+          const lines = selected.split('\n').map((l, idx) => {
+            const stripped = l.replace(/^\d+\.\s*/, '');
+            return `${idx + 1}. ${stripped || l}`;
+          });
+          replacement = lines.join('\n');
+        } else {
+          replacement = '1. item\n';
         }
         cursorOffset = replacement.length;
         break;
@@ -587,6 +717,10 @@
         cursorOffset = replacement.length;
         break;
 
+      case 'internal-link':
+        openInternalLinkModal(selected, start, end);
+        return;
+
       default:
         return;
     }
@@ -599,6 +733,114 @@
 
     setDirty(true);
     updateWordCount();
+  }
+
+  function openInternalLinkModal(selectedText, start, end) {
+    savedEditorSelection = {
+      start: (typeof start === 'number') ? start : (el.postEditor ? el.postEditor.selectionStart : 0),
+      end: (typeof end === 'number') ? end : (el.postEditor ? el.postEditor.selectionEnd : 0),
+      text: selectedText || '',
+    };
+
+    if (el.internalLinkText) {
+      el.internalLinkText.value = selectedText || '';
+    }
+    if (el.internalLinkSlug) {
+      el.internalLinkSlug.value = '';
+    }
+    if (el.internalLinkSearch) {
+      el.internalLinkSearch.value = '';
+    }
+
+    renderInternalLinkPosts();
+    openModal(el.internalLinkModal);
+
+    setTimeout(() => {
+      if (selectedText && el.internalLinkSlug) {
+        el.internalLinkSlug.focus();
+      } else if (el.internalLinkText) {
+        el.internalLinkText.focus();
+      }
+    }, 100);
+  }
+
+  function renderInternalLinkPosts() {
+    if (!el.internalLinkPostList) return;
+    const query = (el.internalLinkSearch ? el.internalLinkSearch.value.toLowerCase().trim() : '');
+
+    const filtered = (state.posts || []).filter((p) => {
+      if (!query) return true;
+      const title = (p.title || '').toLowerCase();
+      const fn = (p.filename || '').toLowerCase();
+      return title.includes(query) || fn.includes(query);
+    });
+
+    if (filtered.length === 0) {
+      el.internalLinkPostList.innerHTML = '<div class="internal-link-item"><span style="color:var(--text-muted);font-size:0.8rem;">Nenhum post encontrado</span></div>';
+      return;
+    }
+
+    el.internalLinkPostList.innerHTML = '';
+    filtered.forEach((p) => {
+      const item = document.createElement('div');
+      item.className = 'internal-link-item';
+      const slug = (p.filename || '').replace(/\.(md|markdown|html)$/i, '');
+      item.innerHTML = `
+        <div class="internal-link-item-title">${escapeHtml(p.title || p.filename)}</div>
+        <div class="internal-link-item-slug">{% post_url ${escapeHtml(slug)} %}</div>
+      `;
+
+      item.addEventListener('click', () => {
+        if (el.internalLinkSlug) el.internalLinkSlug.value = slug;
+        if (el.internalLinkText && !el.internalLinkText.value.trim()) {
+          el.internalLinkText.value = p.title || slug;
+        }
+        el.internalLinkPostList.querySelectorAll('.internal-link-item').forEach((i) => i.classList.remove('selected'));
+        item.classList.add('selected');
+      });
+
+      item.addEventListener('dblclick', () => {
+        if (el.internalLinkSlug) el.internalLinkSlug.value = slug;
+        if (el.internalLinkText && !el.internalLinkText.value.trim()) {
+          el.internalLinkText.value = p.title || slug;
+        }
+        confirmInsertInternalLink();
+      });
+
+      el.internalLinkPostList.appendChild(item);
+    });
+  }
+
+  function confirmInsertInternalLink() {
+    if (!el.postEditor) return;
+    const textVal = (el.internalLinkText ? el.internalLinkText.value.trim() : '') || 'Link';
+    let slugVal = (el.internalLinkSlug ? el.internalLinkSlug.value.trim() : '');
+    slugVal = slugVal
+      .replace(/\.(md|markdown|html)$/i, '')
+      .replace(/^\{%\s*post_url\s+/, '')
+      .replace(/\s*%\}$/, '')
+      .trim();
+
+    if (!slugVal) {
+      showToast('Por favor, informe ou selecione o post para o link.', 'warning');
+      if (el.internalLinkSlug) el.internalLinkSlug.focus();
+      return;
+    }
+
+    const snippet = `[${textVal}]({% post_url ${slugVal} %})`;
+    const textarea = el.postEditor;
+    const start = savedEditorSelection.start;
+    const end = savedEditorSelection.end;
+
+    textarea.focus();
+    textarea.setRangeText(snippet, start, end, 'select');
+    textarea.selectionStart = start + snippet.length;
+    textarea.selectionEnd = start + snippet.length;
+
+    closeModal(el.internalLinkModal);
+    setDirty(true);
+    updateWordCount();
+    showToast('Link interno inserido com sucesso!', 'info');
   }
 
   // --- Image Upload ---
@@ -869,6 +1111,7 @@
         closeModal(el.settingsModal);
         closeModal(el.confirmPublishModal);
         closeModal(el.publishModal);
+        closeModal(el.internalLinkModal);
         closeLogDrawer();
       }
     });
@@ -877,14 +1120,34 @@
     if (el.btnNewPost) el.btnNewPost.addEventListener('click', newPost);
     if (el.btnSavePost) el.btnSavePost.addEventListener('click', savePost);
 
+    // Custom filename bar
+    if (el.postCustomFilename) {
+      el.postCustomFilename.addEventListener('input', () => setDirty(true));
+      el.postCustomFilename.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          savePost();
+        }
+      });
+    }
+    if (el.btnAutoFilename) {
+      el.btnAutoFilename.addEventListener('click', autoGenerateFilenameFromContent);
+    }
+
     // Toolbar buttons
     const toolbarButtons = [
       { el: el.btnBold, action: 'bold' },
       { el: el.btnItalic, action: 'italic' },
+      { el: el.btnUnderline, action: 'underline' },
+      { el: el.btnStrike, action: 'strike' },
+      { el: el.btnInlineCode, action: 'code' },
       { el: el.btnH2, action: 'h2' },
       { el: el.btnH3, action: 'h3' },
-      { el: el.btnList, action: 'list' },
+      { el: el.btnBlockquote, action: 'blockquote' },
+      { el: el.btnList, action: 'unordered-list' },
+      { el: el.btnOrderedList, action: 'ordered-list' },
       { el: el.btnLink, action: 'link' },
+      { el: el.btnInternalLink, action: 'internal-link' },
     ];
 
     toolbarButtons.forEach(({ el: btn, action }) => {
@@ -892,6 +1155,28 @@
         btn.addEventListener('click', () => applyFormatting(action));
       }
     });
+
+    // Internal Link Modal
+    if (el.btnCloseInternalLinkX) el.btnCloseInternalLinkX.addEventListener('click', () => closeModal(el.internalLinkModal));
+    if (el.btnCancelInternalLink) el.btnCancelInternalLink.addEventListener('click', () => closeModal(el.internalLinkModal));
+    if (el.btnConfirmInternalLink) el.btnConfirmInternalLink.addEventListener('click', confirmInsertInternalLink);
+    if (el.internalLinkSearch) el.internalLinkSearch.addEventListener('input', renderInternalLinkPosts);
+    if (el.internalLinkSlug) {
+      el.internalLinkSlug.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          confirmInsertInternalLink();
+        }
+      });
+    }
+    if (el.internalLinkText) {
+      el.internalLinkText.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          confirmInsertInternalLink();
+        }
+      });
+    }
 
     // Image upload input
     if (el.imageFileInput) {
@@ -959,7 +1244,7 @@
     if (el.btnConfirmPublish) el.btnConfirmPublish.addEventListener('click', () => executePublish());
 
     // Close modals on backdrop click
-    [el.settingsModal, el.confirmPublishModal, el.publishModal].forEach((modal) => {
+    [el.settingsModal, el.confirmPublishModal, el.publishModal, el.internalLinkModal].forEach((modal) => {
       if (modal) {
         modal.addEventListener('click', (e) => {
           if (e.target === modal) closeModal(modal);
