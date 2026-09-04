@@ -1,16 +1,51 @@
 import os
 import re
 import unicodedata
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import yaml
 
-def get_current_formatted_date(dt: datetime = None, timezone_str: str = "-0300") -> str:
-    if dt is None:
-        dt = datetime.now()
-    return dt.strftime(f"%Y-%m-%d %H:%M {timezone_str}")
+def parse_timezone_str(tz_str: str) -> timezone:
+    """Parses offset string like '-0300', '+02:00', '-03:00', 'Z' into datetime.timezone."""
+    if not tz_str:
+        return timezone(timedelta(hours=-3))
+    cleaned = str(tz_str).strip()
+    if cleaned.upper() == "Z":
+        return timezone.utc
+    m = re.match(r"^([+-])(\d{2}):?(\d{2})$", cleaned)
+    if m:
+        sign = 1 if m.group(1) == "+" else -1
+        hours = int(m.group(2))
+        minutes = int(m.group(3))
+        return timezone(sign * timedelta(hours=hours, minutes=minutes))
+    return timezone(timedelta(hours=-3))
 
-def generate_new_post_template(dt: datetime = None, timezone_str: str = "-0300") -> str:
-    date_str = get_current_formatted_date(dt, timezone_str)
+def get_current_formatted_date(
+    dt: datetime = None,
+    timezone_str: str = "-0300",
+    client_date: str = None,
+) -> str:
+    if client_date and str(client_date).strip():
+        return str(client_date).strip()
+
+    target_tz = parse_timezone_str(timezone_str)
+    if dt is None:
+        dt = datetime.now(timezone.utc).astimezone(target_tz)
+    elif dt.tzinfo is None:
+        return dt.strftime(f"%Y-%m-%d %H:%M {timezone_str}")
+    else:
+        dt = dt.astimezone(target_tz)
+
+    tz_formatted = dt.strftime("%z")
+    if not tz_formatted:
+        tz_formatted = timezone_str
+    return dt.strftime(f"%Y-%m-%d %H:%M {tz_formatted}")
+
+def generate_new_post_template(
+    dt: datetime = None,
+    timezone_str: str = "-0300",
+    client_date: str = None,
+) -> str:
+    date_str = get_current_formatted_date(dt, timezone_str, client_date=client_date)
     return (
         "---\n"
         "title: \n"
@@ -83,7 +118,7 @@ def sanitize_custom_filename(custom_name: str, date_str: str = None, title: str 
             if m:
                 date_prefix = m.group(1)
         if not date_prefix:
-            date_prefix = datetime.now().strftime("%Y-%m-%d")
+            date_prefix = datetime.now(timezone.utc).astimezone(parse_timezone_str("-0300")).strftime("%Y-%m-%d")
         slug_part = raw
 
     slug = slugify(slug_part) if slug_part else (slugify(title) if title else "sem-titulo")
@@ -100,7 +135,7 @@ def generate_post_filename(title: str, date_str: str = None, slug: str = None) -
         if m:
             date_prefix = m.group(1)
     if not date_prefix:
-        date_prefix = datetime.now().strftime("%Y-%m-%d")
+        date_prefix = datetime.now(timezone.utc).astimezone(parse_timezone_str("-0300")).strftime("%Y-%m-%d")
 
     target_slug = slugify(slug) if slug else (slugify(title) if title else "sem-titulo")
     if not target_slug:

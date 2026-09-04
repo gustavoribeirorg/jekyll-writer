@@ -161,6 +161,11 @@ def test_get_template(client):
     assert "title:" in data["template"]
     assert "layout: post" in data["template"]
 
+    # With client_date
+    res_client = client.get("/api/posts/template/new?client_date=2026-09-04%2012:52%20-0300")
+    assert res_client.status_code == 200
+    assert "date: 2026-09-04 12:52 -0300" in res_client.json()["template"]
+
 
 def test_save_post_with_custom_filename(client, tmp_path):
     post_content = "---\ntitle: Fazendo um sistema com IA\ndate: 2026-09-04 12:00:00 -0300\nlayout: post\n---\nCorpo."

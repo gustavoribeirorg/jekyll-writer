@@ -520,6 +520,20 @@
     }
   }
 
+  function getClientFormattedDate() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const offset = -now.getTimezoneOffset();
+    const sign = offset >= 0 ? '+' : '-';
+    const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+    const offsetMins = String(Math.abs(offset) % 60).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes} ${sign}${offsetHours}${offsetMins}`;
+  }
+
   async function newPost() {
     if (state.isDirty) {
       const confirmNew = confirm('Você tem alterações não salvas. Deseja criar um novo post assim mesmo?');
@@ -527,7 +541,8 @@
     }
 
     try {
-      const res = await fetch('/api/posts/template/new');
+      const clientDate = getClientFormattedDate();
+      const res = await fetch(`/api/posts/template/new?client_date=${encodeURIComponent(clientDate)}`);
       if (!res.ok) throw new Error('Falha ao gerar template');
       const data = await res.json();
 

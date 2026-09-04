@@ -225,8 +225,12 @@ def list_posts(cfg: ConfigManager = Depends(get_config_manager)) -> List[Dict[st
 
 
 @app.get("/api/posts/template/new")
-def get_template() -> Dict[str, str]:
-    template = generate_new_post_template()
+def get_template(
+    client_date: Optional[str] = None,
+    cfg: ConfigManager = Depends(get_config_manager),
+) -> Dict[str, str]:
+    tz_str = cfg.get("timezone", "-0300") or "-0300"
+    template = generate_new_post_template(timezone_str=tz_str, client_date=client_date)
     return {"template": template}
 
 

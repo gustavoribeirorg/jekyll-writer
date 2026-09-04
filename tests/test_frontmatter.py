@@ -7,8 +7,11 @@ from jekyll_writer.frontmatter import (
     parse_front_matter,
     generate_post_filename,
     sanitize_custom_filename,
+    parse_timezone_str,
+    get_current_formatted_date,
     save_post
 )
+from datetime import timezone, timedelta
 
 def test_generate_new_post_template():
     dt = datetime(2026, 9, 1, 12, 30)
@@ -19,6 +22,24 @@ def test_generate_new_post_template():
     assert "title: " in template
     assert "categories: " in template
     assert "tags: " in template
+
+    # With client_date
+    template_client = generate_new_post_template(client_date="2026-09-04 12:52 -0300")
+    assert "date: 2026-09-04 12:52 -0300" in template_client
+
+
+def test_timezone_conversion():
+    # Parse various timezone formats
+    tz = parse_timezone_str("-0300")
+    assert tz == timezone(timedelta(hours=-3))
+
+    tz_colon = parse_timezone_str("+05:30")
+    assert tz_colon == timezone(timedelta(hours=5, minutes=30))
+
+    # UTC aware datetime: 15:00 UTC should become 12:00 in -0300
+    dt_utc = datetime(2026, 9, 4, 15, 0, tzinfo=timezone.utc)
+    formatted = get_current_formatted_date(dt_utc, timezone_str="-0300")
+    assert formatted == "2026-09-04 12:00 -0300"
 
 def test_slugify():
     assert slugify("Servidor Rodando no Termux!") == "servidor-rodando-no-termux"
