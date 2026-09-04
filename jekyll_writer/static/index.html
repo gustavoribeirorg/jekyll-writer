@@ -149,8 +149,9 @@
       <div class="modal-body">
         <div class="form-group">
           <label for="cfgJekyllRoot">Diretório do Jekyll (Root):</label>
-          <input type="text" id="cfgJekyllRoot" placeholder="Ex: $HOME/blog ou /home/user/blog">
-          <small class="form-help">Pasta raiz do seu projeto Jekyll contendo _posts e _config.yml (suporta $HOME ou ~).</small>
+          <input type="text" id="cfgJekyllRoot" placeholder="Ex: $HOME/blog, ~/blog ou /caminho/completo">
+          <small class="form-help">Pasta raiz do blog contendo _posts e _config.yml (suporta $HOME, HOME/ ou ~/).</small>
+          <div id="cfgJekyllRootFeedback" class="path-feedback-status"></div>
         </div>
 
         <div class="form-group">

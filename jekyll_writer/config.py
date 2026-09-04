@@ -16,17 +16,53 @@ DEFAULT_CONFIG = {
 def resolve_path(path: str) -> str:
     """
     Expands user home (~), environment variables ($HOME, %VAR%),
-    and handles platform-specific HOME/USERPROFILE fallback.
+    leading HOME/ (without $), and handles Termux, Windows, and Linux fallbacks.
     """
     if not path or not isinstance(path, str):
         return ""
-    expanded = os.path.expanduser(path.strip())
-    expanded = os.path.expandvars(expanded)
-    for var_name in ("$HOME", "${HOME}"):
-        if var_name in expanded:
-            home = os.environ.get("HOME") or os.environ.get("USERPROFILE", "")
-            expanded = expanded.replace(var_name, home)
-    return os.path.normpath(expanded)
+
+    p = path.strip()
+
+    # 1. If user typed HOME/... or HOME\... without $, prefix with $
+    if p == "HOME" or p.startswith("HOME/") or p.startswith("HOME\\"):
+        p = "$" + p
+
+    # 2. Determine best home directory candidate
+    termux_home = "/data/data/com.termux/files/home"
+    is_termux = os.path.exists(termux_home)
+    home = os.environ.get("HOME") or os.environ.get("USERPROFILE")
+    if not home and is_termux:
+        home = termux_home
+
+    # 3. Explicitly expand tilde ~ (handles cases on Android where os.path.expanduser fails if HOME is unset)
+    if p.startswith("~/") or p.startswith("~\\"):
+        if home:
+            p = home + p[1:]
+        else:
+            p = os.path.expanduser(p)
+    elif p == "~":
+        p = home or os.path.expanduser(p)
+    else:
+        p = os.path.expanduser(p)
+
+    # 4. Expand environment variables
+    p = os.path.expandvars(p)
+
+    # 5. Fallback for $HOME or ${HOME}
+    for var_token in ("$HOME", "${HOME}"):
+        if var_token in p:
+            h = home or (termux_home if is_termux else "")
+            if h:
+                p = p.replace(var_token, h)
+
+    # 6. Normalize separators
+    if os.name == "posix":
+        p = p.replace("\\", "/")
+        p = os.path.normpath(p)
+    else:
+        p = os.path.normpath(p)
+
+    return p
 
 
 class ConfigManager:
@@ -63,6 +99,29 @@ class ConfigManager:
     def get_jekyll_root(self) -> str:
         root = self.get("jekyll_root", "")
         return resolve_path(root) if root else ""
+
+    def validate_jekyll_root(self) -> Dict[str, Any]:
+        root = self.get_jekyll_root()
+        exists = bool(root and os.path.isdir(root))
+        posts_dir = self.get_posts_dir()
+        posts_dir_exists = bool(posts_dir and os.path.isdir(posts_dir))
+        posts_count = 0
+        if posts_dir_exists:
+            try:
+                posts_count = len([
+                    f for f in os.listdir(posts_dir)
+                    if f.endswith((".md", ".markdown")) and os.path.isfile(os.path.join(posts_dir, f))
+                ])
+            except Exception:
+                pass
+        return {
+            "configured_root": self.get("jekyll_root", ""),
+            "resolved_root": root,
+            "root_exists": exists,
+            "posts_dir": posts_dir,
+            "posts_dir_exists": posts_dir_exists,
+            "posts_count": posts_count,
+        }
 
     def get_posts_dir(self) -> str:
         root = self.get_jekyll_root()

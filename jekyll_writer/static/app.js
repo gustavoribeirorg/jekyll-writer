@@ -60,6 +60,7 @@
     btnClearCache: document.getElementById('btnClearCache'),
     clearCacheFeedback: document.getElementById('clearCacheFeedback'),
     cfgJekyllRoot: document.getElementById('cfgJekyllRoot'),
+    cfgJekyllRootFeedback: document.getElementById('cfgJekyllRootFeedback'),
     cfgBuildCommand: document.getElementById('cfgBuildCommand'),
     cfgDeployMode: document.getElementById('cfgDeployMode'),
     sshSettingsFields: document.getElementById('sshSettingsFields'),
@@ -165,6 +166,26 @@
 
   // --- API Calls & Core Operations ---
 
+  function updateJekyllRootFeedback(data) {
+    if (!el.cfgJekyllRootFeedback) return;
+    if (!data || !data.jekyll_root) {
+      el.cfgJekyllRootFeedback.textContent = '';
+      el.cfgJekyllRootFeedback.className = 'path-feedback-status';
+      return;
+    }
+    const resolved = data.resolved_jekyll_root || data.jekyll_root;
+    if (data.posts_dir_exists) {
+      el.cfgJekyllRootFeedback.textContent = `Caminho resolvido no servidor: ${resolved} (${data.posts_count} posts encontrados em _posts/)`;
+      el.cfgJekyllRootFeedback.className = 'path-feedback-status success';
+    } else if (data.root_exists) {
+      el.cfgJekyllRootFeedback.textContent = `Pasta encontrada no servidor (${resolved}), mas a subpasta _posts/ ainda não existe.`;
+      el.cfgJekyllRootFeedback.className = 'path-feedback-status warning';
+    } else {
+      el.cfgJekyllRootFeedback.textContent = `Aviso: Diretório não encontrado no servidor: ${resolved}`;
+      el.cfgJekyllRootFeedback.className = 'path-feedback-status error';
+    }
+  }
+
   async function loadConfig() {
     try {
       const res = await fetch('/api/config');
@@ -185,6 +206,8 @@
       if (el.pubSshHost) el.pubSshHost.value = data.ssh_host || '';
       if (el.pubSshPort) el.pubSshPort.value = data.ssh_port || 22;
       if (el.pubSshUser) el.pubSshUser.value = data.ssh_user || '';
+
+      updateJekyllRootFeedback(data);
     } catch (err) {
       console.error('Erro ao buscar configurações:', err);
     }
@@ -208,7 +231,18 @@
       if (!res.ok) throw new Error('Falha ao salvar configurações');
       const data = await res.json();
       state.config = data;
-      showToast('Configurações salvas com sucesso!', 'success');
+      updateJekyllRootFeedback(data);
+
+      if (data.posts_dir_exists) {
+        showToast(`Configurações salvas! (${data.posts_count} posts encontrados)`, 'success');
+      } else if (data.root_exists) {
+        showToast('Salvo! Pasta encontrada, mas subpasta _posts não existe.', 'warning');
+      } else if (data.jekyll_root) {
+        showToast(`Aviso: Pasta '${data.resolved_jekyll_root || data.jekyll_root}' não existe no servidor!`, 'warning');
+      } else {
+        showToast('Configurações salvas com sucesso!', 'success');
+      }
+
       closeModal(el.settingsModal);
       loadPosts();
     } catch (err) {

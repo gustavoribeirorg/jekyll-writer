@@ -763,6 +763,36 @@ body {
   color: var(--error);
 }
 
+.path-feedback-status {
+  font-size: 0.78rem;
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  display: none;
+  line-height: 1.4;
+}
+
+.path-feedback-status.success {
+  display: block;
+  color: var(--success);
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.path-feedback-status.warning {
+  display: block;
+  color: var(--warning);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.path-feedback-status.error {
+  display: block;
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
 /* Toast Notifications */
 .toast-container {
   position: fixed;

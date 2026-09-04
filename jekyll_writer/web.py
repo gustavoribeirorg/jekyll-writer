@@ -76,13 +76,20 @@ def get_config_manager() -> ConfigManager:
     return ConfigManager()
 
 
-def _sanitize_config(data: Dict[str, Any]) -> Dict[str, Any]:
-    return {k: v for k, v in data.items() if k != "ssh_password"}
+def _sanitize_config(data: Dict[str, Any], cfg: Optional[ConfigManager] = None) -> Dict[str, Any]:
+    sanitized = {k: v for k, v in data.items() if k != "ssh_password"}
+    if cfg is not None:
+        val = cfg.validate_jekyll_root()
+        sanitized["resolved_jekyll_root"] = val["resolved_root"]
+        sanitized["root_exists"] = val["root_exists"]
+        sanitized["posts_dir_exists"] = val["posts_dir_exists"]
+        sanitized["posts_count"] = val["posts_count"]
+    return sanitized
 
 
 @app.get("/api/config")
 def get_config(cfg: ConfigManager = Depends(get_config_manager)) -> Dict[str, Any]:
-    return _sanitize_config(cfg.data)
+    return _sanitize_config(cfg.data, cfg)
 
 
 @app.post("/api/config")
@@ -106,7 +113,7 @@ def save_config(
     # Never persist ssh_password
     cfg.set("ssh_password", "")
     cfg.save()
-    return _sanitize_config(cfg.data)
+    return _sanitize_config(cfg.data, cfg)
 
 
 @app.post("/api/config/clear-cache")
