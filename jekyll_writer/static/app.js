@@ -406,10 +406,10 @@
             </svg>
           </button>
         </div>
+        ${post.categories ? `
         <div class="post-item-meta">
-          <span class="post-item-date">${escapeHtml(post.date || '')}</span>
-          <span class="post-item-category" title="${escapeHtml(post.categories || '')}">${escapeHtml(post.categories || '')}</span>
-        </div>
+          <span class="post-item-category" title="${escapeHtml(post.categories)}">${escapeHtml(post.categories)}</span>
+        </div>` : ''}
       `;
 
       const copyBtn = item.querySelector('.btn-copy-filename');

@@ -390,20 +390,19 @@ body {
   background-color: var(--bg-hover);
 }
 
+.post-item-filename-row:last-child {
+  margin-bottom: 0;
+}
+
 .post-item-meta {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   font-size: 0.75rem;
   color: var(--text-muted);
 }
 
-.post-item-date {
-  font-family: var(--font-mono);
-}
-
 .post-item-category {
-  max-width: 110px;
+  max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
