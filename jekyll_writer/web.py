@@ -303,12 +303,15 @@ def upload_image(
             shutil.copyfileobj(file.file, f)
 
         html_snippet, dest_path = process_and_copy_image(temp_path, jekyll_root)
-        optimize_images(jekyll_root)
+        optimize_images(jekyll_root, delete_originals=True)
+
+        webp_path = os.path.splitext(dest_path)[0] + ".webp"
+        final_filename = os.path.basename(webp_path if os.path.exists(webp_path) else dest_path)
 
         return {
             "success": True,
             "html_snippet": html_snippet,
-            "filename": os.path.basename(dest_path),
+            "filename": final_filename,
         }
     except HTTPException:
         raise

@@ -13,10 +13,46 @@ def normalize_name(name: str) -> str:
     name = re.sub(r'_+', '_', name)
     return name
 
-def optimize_images(project_dir: str, log_callback: Optional[Callable[[str, str], None]] = None) -> int:
+def _update_file_references(
+    files_to_update: list,
+    base_name: str,
+    webp_name: str,
+    project_dir: str,
+    log: Callable[[str, str], None],
+) -> None:
+    for filepath in files_to_update:
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                content = f.read()
+            new_content = content
+
+            pattern = re.escape(base_name) + r'(?!\.webp)'
+            new_content = re.sub(pattern, webp_name, new_content)
+
+            url_encoded_base = base_name.replace(" ", "%20")
+            if url_encoded_base != base_name:
+                pattern_encoded = re.escape(url_encoded_base) + r'(?!\.webp)'
+                new_content = re.sub(pattern_encoded, webp_name, new_content)
+
+            new_content = new_content.replace('src="assets/imagens/', 'src="/assets/imagens/')
+            new_content = new_content.replace('.webp.webp', '.webp')
+
+            if new_content != content:
+                with open(filepath, "w", encoding="utf-8") as f:
+                    f.write(new_content)
+                log(f"Links atualizados em: {os.path.relpath(filepath, project_dir)}", "info")
+        except Exception:
+            pass
+
+def optimize_images(
+    project_dir: str,
+    log_callback: Optional[Callable[[str, str], None]] = None,
+    delete_originals: bool = True,
+) -> int:
     """
     Varre assets/ por imagens (.heic, .jpg, .jpeg, .png), converte para WebP (max 1MB),
-    atualiza referencias nos arquivos do projeto e adiciona os originais ao .gitignore.
+    atualiza referências nos arquivos do projeto e exclui os arquivos originais
+    (ou adiciona ao .gitignore caso delete_originals=False).
     """
     def log(msg: str, lvl: str = "info"):
         if log_callback:
@@ -69,13 +105,25 @@ def optimize_images(project_dir: str, log_callback: Optional[Callable[[str, str]
         webp_name = name_no_ext + ".webp"
         webp_path = os.path.join(os.path.dirname(img_path), webp_name)
 
-        # Adicionar o original ao gitignore se nao estiver
-        rel_path = os.path.relpath(img_path, project_dir).replace("\\", "/")
-        if rel_path not in gitignore_content and rel_path not in new_gitignore_entries:
-            new_gitignore_entries.append(rel_path)
+        # Adicionar o original ao gitignore se nao estiver e se delete_originals for False
+        if not delete_originals:
+            rel_path = os.path.relpath(img_path, project_dir).replace("\\", "/")
+            if rel_path not in gitignore_content and rel_path not in new_gitignore_entries:
+                new_gitignore_entries.append(rel_path)
 
         # Verificar se ja existe uma versao webp processada
         if os.path.exists(webp_path):
+            if (
+                delete_originals
+                and os.path.getsize(webp_path) > 0
+                and os.path.abspath(img_path) != os.path.abspath(webp_path)
+            ):
+                try:
+                    os.remove(img_path)
+                    log(f"Original excluído (WebP já existe): {base_name}", "info")
+                except Exception as e:
+                    log(f"Erro ao excluir {img_path}: {e}", "warning")
+            _update_file_references(files_to_update, base_name, webp_name, project_dir, log)
             continue
 
         log(f"Convertendo: {base_name} -> {webp_name}", "info")
@@ -97,34 +145,24 @@ def optimize_images(project_dir: str, log_callback: Optional[Callable[[str, str]
             log(f"Erro ao converter {img_path}: {e}", "error")
             continue
 
-        # Atualizar referencias nos arquivos
-        for filepath in files_to_update:
+        # Excluir imagem original após conversão bem-sucedida para economizar espaço
+        if (
+            delete_originals
+            and os.path.exists(webp_path)
+            and os.path.getsize(webp_path) > 0
+            and os.path.abspath(img_path) != os.path.abspath(webp_path)
+        ):
             try:
-                with open(filepath, "r", encoding="utf-8") as f:
-                    content = f.read()
-                new_content = content
+                os.remove(img_path)
+                log(f"Original excluído para economizar espaço: {base_name}", "info")
+            except Exception as e:
+                log(f"Erro ao excluir {img_path}: {e}", "warning")
 
-                pattern = re.escape(base_name) + r'(?!\.webp)'
-                new_content = re.sub(pattern, webp_name, new_content)
-
-                url_encoded_base = base_name.replace(" ", "%20")
-                if url_encoded_base != base_name:
-                    pattern_encoded = re.escape(url_encoded_base) + r'(?!\.webp)'
-                    new_content = re.sub(pattern_encoded, webp_name, new_content)
-
-                new_content = new_content.replace('src="assets/imagens/', 'src="/assets/imagens/')
-                new_content = new_content.replace('.webp.webp', '.webp')
-
-                if new_content != content:
-                    with open(filepath, "w", encoding="utf-8") as f:
-                        f.write(new_content)
-                    log(f"Links atualizados em: {os.path.relpath(filepath, project_dir)}", "info")
-            except Exception:
-                pass
-
+        # Atualizar referencias nos arquivos
+        _update_file_references(files_to_update, base_name, webp_name, project_dir, log)
         count_converted += 1
 
-    if new_gitignore_entries:
+    if new_gitignore_entries and not delete_originals:
         try:
             with open(gitignore_path, "a", encoding="utf-8") as f:
                 f.write("\n# Imagens originais auto-geradas\n")

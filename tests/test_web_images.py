@@ -38,15 +38,15 @@ def test_upload_image_success(client, tmp_path):
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is True
-    assert data["filename"] == "foto-teste-de-ferias.png"
+    assert data["filename"] == "foto-teste-de-ferias.webp"
     assert "<figure>" in data["html_snippet"]
     assert "</figure>" in data["html_snippet"]
     assert "/assets/imagens/foto-teste-de-ferias.webp" in data["html_snippet"]
     assert "<figcaption>Foto teste de ferias</figcaption>" in data["html_snippet"]
 
-    # Verify original file and webp file exist in assets/imagens
+    # Verify original file was deleted to save space and only webp file exists in assets/imagens
     dest_dir = tmp_path / "assets" / "imagens"
-    assert (dest_dir / "foto-teste-de-ferias.png").exists()
+    assert not (dest_dir / "foto-teste-de-ferias.png").exists()
     assert (dest_dir / "foto-teste-de-ferias.webp").exists()
 
 
