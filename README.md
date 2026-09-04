@@ -1,12 +1,12 @@
-# ✍️ Jekyll Writer Web
+# Jekyll Writer Web
 
 Editor web autohospedado, moderno e leve para redação, gerenciamento e publicação automatizada de blogs [Jekyll](https://jekyllrb.com/).
 
-> 🤖 **Desenvolvido com Inteligência Artificial**: Concebido, arquitetado e testado em colaboração com IA (Google DeepMind / Antigravity), utilizando Desenvolvimento Guiado por Testes (TDD), Subagent-Driven Development (SDD) e rigorosa política de segurança e sanitização.
+> **Desenvolvido com Inteligência Artificial**: Concebido, arquitetado e testado em colaboração com IA (Google DeepMind / Antigravity), utilizando Desenvolvimento Guiado por Testes (TDD), Subagent-Driven Development (SDD) e rigorosa política de segurança e sanitização.
 
 ---
 
-## ✨ Funcionalidades
+## Funcionalidades
 
 - **Gerenciador de Artigos**: Barra lateral com busca em tempo real de artigos em `_posts/` e geração automática de Front Matter YAML.
 - **Editor Markdown**: Área de texto leve, atalhos de formatação rápida, suporte a `Ctrl+S` e dirty state.
@@ -17,7 +17,7 @@ Editor web autohospedado, moderno e leve para redação, gerenciamento e publica
 
 ---
 
-## 🚀 Instalação e Execução
+## Instalação e Execução
 
 ### 1. Instalar Dependências
 ```bash
@@ -36,18 +36,18 @@ O servidor iniciará escutando em `http://localhost:8000`.
 
 ---
 
-## ⚙️ Configuração Básica
+## Configuração Básica
 
-Abra o painel em **⚙️ Configurações**:
+Abra o painel em **Configurações**:
 
 1. **Diretório do Jekyll (Root)**: Caminho da pasta do seu blog contendo `_posts/` e `_config.yml` (ex: `/home/usuario/blog` ou `C:\Users\usuario\blog`).
 2. **Modo de Publicação**:
-   - `⚡ Direto no Servidor (Local)` *(Recomendado)*: Compila o blog diretamente na máquina onde o app roda. Se o seu servidor web já lê a pasta `_site`, a publicação é instantânea e não requer senhas de SSH.
-   - `🌐 Servidor Remoto via SSH/SFTP`: Permite enviar os arquivos para outro servidor remoto.
+   - `Direto no Servidor (Local)` *(Recomendado)*: Compila o blog diretamente na máquina onde o app roda. Se o seu servidor web já lê a pasta `_site`, a publicação é instantânea e não requer senhas de SSH.
+   - `Servidor Remoto via SSH/SFTP`: Permite enviar os arquivos para outro servidor remoto.
 
 ---
 
-## ☁️ Acesso Remoto Seguro (Cloudflare Tunnel + Access)
+## Acesso Remoto Seguro (Cloudflare Tunnel + Access)
 
 Para acessar o editor de qualquer aparelho (computador, tablet ou smartphone) sem expor portas no roteador:
 
@@ -56,7 +56,7 @@ Para acessar o editor de qualquer aparelho (computador, tablet ou smartphone) se
 
 ---
 
-## 🧪 Testes Automatizados
+## Testes Automatizados
 
 O projeto conta com suíte de testes unitários automatizados com 100% de aprovação:
 
@@ -66,6 +66,6 @@ pytest -v
 
 ---
 
-## 📄 Licença
+## Licença
 
 Distribuído sob a licença MIT.

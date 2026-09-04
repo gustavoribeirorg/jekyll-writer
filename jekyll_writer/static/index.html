@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>✍️ Jekyll Writer</title>
+  <title>Jekyll Writer</title>
   <link rel="stylesheet" href="/static/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,7 +21,7 @@
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
         </button>
-        <h1 class="app-title">✍️ Jekyll Writer</h1>
+        <h1 class="app-title">Jekyll Writer</h1>
         <div id="saveStatus" class="save-status saved" title="Status de Salvamento">
           <span class="status-dot"></span>
           <span class="status-text">Salvo</span>
@@ -34,15 +34,12 @@
           <span>Novo Post</span>
         </button>
         <button id="btnSavePost" class="btn btn-primary" title="Salvar (Ctrl+S)">
-          <span class="btn-icon">💾</span>
           <span>Salvar</span>
         </button>
         <button id="btnOpenSettings" class="btn btn-ghost" title="Configurações">
-          <span class="btn-icon">⚙️</span>
           <span>Configurações</span>
         </button>
-        <button id="btnOpenPublish" class="btn btn-accent" title="Publicar via SSH">
-          <span class="btn-icon">🚀</span>
+        <button id="btnOpenPublish" class="btn btn-accent" title="Enviar Publicação">
           <span>Enviar Publicação</span>
         </button>
       </div>
@@ -55,7 +52,7 @@
         <div class="sidebar-header">
           <div class="search-box">
             <input type="text" id="postSearch" placeholder="Buscar posts..." aria-label="Buscar posts">
-            <span class="search-icon">🔍</span>
+            <span class="search-icon">Search</span>
           </div>
         </div>
         <div id="postList" class="post-list" role="list">
@@ -84,7 +81,7 @@
               • Lista
             </button>
             <button id="btnLink" class="tool-btn" data-action="link" title="Link ([texto](url))">
-              🔗 Link
+              Link
             </button>
           </div>
 
@@ -92,7 +89,7 @@
 
           <div class="toolbar-group">
             <label for="imageFileInput" class="tool-btn image-upload-label" title="Inserir Imagem">
-              <span>🖼️ Imagem</span>
+              <span>Imagem</span>
             </label>
             <input type="file" id="imageFileInput" accept="image/*" class="sr-only">
           </div>
@@ -112,7 +109,7 @@
           </div>
           <div class="status-right">
             <button id="btnToggleLogs" class="btn-status-toggle" title="Alternar Console de Logs">
-              <span>📋 Logs</span>
+              <span>Logs</span>
               <span id="logBadge" class="log-badge hidden">0</span>
             </button>
           </div>
@@ -124,16 +121,15 @@
     <section id="logDrawer" class="log-drawer" aria-label="Console de Logs">
       <div class="drawer-header">
         <div class="drawer-title">
-          <span class="terminal-icon">📟</span>
-          <span>Terminal de Publicação & Logs</span>
+          <span>Terminal de Publicação e Logs</span>
         </div>
         <div class="drawer-actions">
-          <button id="btnClearLogs" class="icon-btn-small" title="Limpar Logs">🗑️</button>
-          <button id="btnCloseLogs" class="icon-btn-small" title="Fechar Drawer">✕</button>
+          <button id="btnClearLogs" class="icon-btn-small" title="Limpar Logs">Limpar</button>
+          <button id="btnCloseLogs" class="icon-btn-small" title="Fechar Drawer">&times;</button>
         </div>
       </div>
       <div id="logOutput" class="log-output" role="log" aria-live="polite">
-        <div class="log-line log-info">[INFO] Console pronto. Clique em "Enviar Publicação" para iniciar o deploy.</div>
+        <div class="log-line log-info">[INFO] Console pronto. Clique em "Enviar Publicação" para iniciar.</div>
       </div>
     </section>
   </div>
@@ -142,7 +138,7 @@
   <div id="settingsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h2 id="settingsModalTitle" class="modal-title">⚙️ Configurações</h2>
+        <h2 id="settingsModalTitle" class="modal-title">Configurações</h2>
         <button id="btnCloseSettingsX" class="modal-close-btn" aria-label="Fechar">&times;</button>
       </div>
       <div class="modal-body">
@@ -155,8 +151,8 @@
         <div class="form-group">
           <label for="cfgDeployMode">Modo de Publicação:</label>
           <select id="cfgDeployMode" class="form-control" style="width: 100%; padding: 10px; background: var(--bg-surface-2); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
-            <option value="local">⚡ Direto no Servidor (Local / Termux - sem SSH)</option>
-            <option value="ssh">🌐 Servidor Remoto via SSH/SFTP</option>
+            <option value="local">Direto no Servidor (Local / Termux - sem SSH)</option>
+            <option value="ssh">Servidor Remoto via SSH/SFTP</option>
           </select>
           <small class="form-help">No Termux/Servidor, use "Direto no Servidor" para compilar em _site sem pedir senha.</small>
         </div>
@@ -180,7 +176,7 @@
 
         <div class="modal-actions-inline">
           <button id="btnClearCache" class="btn btn-danger-outline" type="button">
-            <span>🗑️ Limpar Cache de Sync</span>
+            <span>Limpar Cache de Sincronização</span>
           </button>
           <span id="clearCacheFeedback" class="action-feedback"></span>
         </div>
@@ -196,7 +192,7 @@
   <div id="confirmPublishModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="confirmPublishTitle">
     <div class="modal-card" style="max-width: 440px;">
       <div class="modal-header">
-        <h2 id="confirmPublishTitle" class="modal-title">🚀 Publicar Blog</h2>
+        <h2 id="confirmPublishTitle" class="modal-title">Publicar Blog</h2>
         <button id="btnCloseConfirmPublishX" class="modal-close-btn" aria-label="Fechar">&times;</button>
       </div>
       <div class="modal-body">
@@ -208,7 +204,7 @@
       <div class="modal-footer">
         <button id="btnCancelConfirmPublish" class="btn btn-ghost" type="button">Cancelar</button>
         <button id="btnExecuteLocalPublish" class="btn btn-accent" type="button">
-          <span>🚀 Confirmar e Publicar</span>
+          <span>Confirmar e Publicar</span>
         </button>
       </div>
     </div>
@@ -218,7 +214,7 @@
   <div id="publishModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="publishModalTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h2 id="publishModalTitle" class="modal-title">🚀 Enviar Publicação via SSH</h2>
+        <h2 id="publishModalTitle" class="modal-title">Publicar via SSH</h2>
         <button id="btnClosePublishX" class="modal-close-btn" aria-label="Fechar">&times;</button>
       </div>
       <div class="modal-body">
@@ -243,7 +239,7 @@
         <div class="form-group">
           <label for="pubSshPassword">Senha SSH:</label>
           <input type="password" id="pubSshPassword" placeholder="Sua senha temporária">
-          <small class="form-help">🔒 Zero-Persistência: A senha nunca é salva no disco.</small>
+          <small class="form-help">Zero-Persistência: A senha nunca é salva no disco.</small>
         </div>
 
         <div class="modal-actions-inline">
@@ -256,7 +252,7 @@
       <div class="modal-footer">
         <button id="btnCancelPublish" class="btn btn-ghost" type="button">Cancelar</button>
         <button id="btnConfirmPublish" class="btn btn-accent" type="button">
-          <span>🚀 Confirmar e Publicar</span>
+          <span>Confirmar e Publicar</span>
         </button>
       </div>
     </div>

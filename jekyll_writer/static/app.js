@@ -104,13 +104,7 @@
     if (!el.toastContainer) return;
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-
-    let icon = 'ℹ️';
-    if (type === 'success') icon = '✅';
-    if (type === 'error') icon = '❌';
-    if (type === 'warning') icon = '⚠️';
-
-    toast.innerHTML = `<span>${icon}</span><span>${escapeHtml(message)}</span>`;
+    toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
     el.toastContainer.appendChild(toast);
 
     setTimeout(() => {
@@ -548,20 +542,20 @@
       const data = await res.json();
       if (data.success) {
         if (el.sshTestFeedback) {
-          el.sshTestFeedback.textContent = '✅ Conexão SSH estabelecida com sucesso!';
+          el.sshTestFeedback.textContent = 'Conexão SSH estabelecida com sucesso!';
           el.sshTestFeedback.className = 'action-feedback success';
         }
         showToast('SSH conectado com sucesso!', 'success');
       } else {
         if (el.sshTestFeedback) {
-          el.sshTestFeedback.textContent = `❌ Falha: ${data.message}`;
+          el.sshTestFeedback.textContent = `Falha: ${data.message}`;
           el.sshTestFeedback.className = 'action-feedback error';
         }
         showToast(`Falha SSH: ${data.message}`, 'error');
       }
     } catch (err) {
       if (el.sshTestFeedback) {
-        el.sshTestFeedback.textContent = `❌ Erro: ${err.message}`;
+        el.sshTestFeedback.textContent = `Erro: ${err.message}`;
         el.sshTestFeedback.className = 'action-feedback error';
       }
       showToast(`Erro SSH: ${err.message}`, 'error');
@@ -658,7 +652,7 @@
                 const payload = JSON.parse(jsonStr);
                 if (payload.event === 'done') {
                   if (payload.success) {
-                    appendLogLine('Publicação concluída com sucesso! 🚀', 'success');
+                    appendLogLine('Publicação concluída com sucesso!', 'success');
                     showToast('Publicação concluída com sucesso!', 'success');
                   } else {
                     appendLogLine('Publicação finalizada com erros.', 'error');

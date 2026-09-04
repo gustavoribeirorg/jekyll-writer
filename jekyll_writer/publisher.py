@@ -441,7 +441,7 @@ class PublisherEngine:
     ) -> bool:
         self._is_cancelled = False
         self.log("=========================================", "info")
-        self.log("🚀 INICIANDO PIPELINE DE PUBLICAÇÃO", "info")
+        self.log("INICIANDO PIPELINE DE PUBLICAÇÃO", "info")
         self.log("=========================================", "info")
 
         if not jekyll_root or not os.path.isdir(jekyll_root):
@@ -450,7 +450,7 @@ class PublisherEngine:
 
         # 1. Otimização de imagens embutida
         if has_images:
-            self.log("🖼️ Executando otimização de imagens (embutido)...", "info")
+            self.log("Executando otimização de imagens (embutido)...", "info")
             try:
                 optimize_images(jekyll_root, log_callback=self.log)
             except Exception as e:
@@ -458,7 +458,7 @@ class PublisherEngine:
                 return False
 
         # 2. Build do Jekyll
-        self.log(f"🔨 Compilando blog Jekyll com: {jekyll_cmd}", "info")
+        self.log(f"Compilando blog Jekyll com: {jekyll_cmd}", "info")
         if not self.run_command(jekyll_cmd, cwd=jekyll_root):
             self.log("Erro na compilação do Jekyll. Envio cancelado.", "error")
             return False
@@ -472,14 +472,14 @@ class PublisherEngine:
         if ssh_config and ssh_config.get("ssh_host"):
             cache_file = os.path.join(jekyll_root, ".jekyll_writer_cache.json")
             remote_path = ssh_config.get("ssh_remote_path", "").strip() or "~/blog/_site"
-            self.log(f"📡 Transferindo arquivos de _site/ para o servidor remoto via SFTP...", "info")
+            self.log(f"Transferindo arquivos de _site/ para o servidor remoto via SFTP...", "info")
             if not self.sync_sftp(site_dir, remote_path, ssh_config, cache_file=cache_file):
                 self.log("Falha no envio dos arquivos para o servidor.", "error")
                 return False
         else:
-            self.log("⚡ Modo Local: arquivos compilados em _site/ prontos para o servidor web.", "success")
+            self.log("Modo Local: arquivos compilados em _site/ prontos para o servidor web.", "success")
 
         self.log("=========================================", "success")
-        self.log("✅ PUBLICAÇÃO CONCLUÍDA COM SUCESSO!", "success")
+        self.log("PUBLICAÇÃO CONCLUÍDA COM SUCESSO!", "success")
         self.log("=========================================", "success")
         return True
