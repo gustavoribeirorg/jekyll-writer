@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jekyll Writer</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style.css?v=20260904_4">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -143,9 +143,10 @@
       <div class="modal-body">
         <div class="form-group">
           <label for="cfgJekyllRoot">Diretório do Jekyll (Root):</label>
-          <input type="text" id="cfgJekyllRoot" placeholder="Ex: $HOME/blog, ~/blog ou /caminho/completo">
-          <small class="form-help">Pasta raiz do blog contendo _posts e _config.yml (suporta $HOME, HOME/ ou ~/).</small>
+          <input type="text" id="cfgJekyllRoot" placeholder="Ex: /data/data/com.termux/files/home/gustavoribeiro-net">
+          <small class="form-help">Pasta raiz do blog contendo _posts e _config.yml (suporta caminhos completos, $HOME ou ~).</small>
           <div id="cfgJekyllRootFeedback" class="path-feedback-status"></div>
+          <div id="cfgDetectedCandidates" class="detected-candidates-container" style="display: none;"></div>
         </div>
 
         <div class="form-group">
@@ -261,6 +262,6 @@
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=20260904_4"></script>
 </body>
 </html>

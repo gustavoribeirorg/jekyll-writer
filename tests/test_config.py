@@ -116,3 +116,14 @@ def test_validate_jekyll_root(tmp_path, monkeypatch):
     assert val["root_exists"] is True
     assert val["posts_dir_exists"] is True
     assert val["posts_count"] == 2
+
+
+def test_resolve_path_sibling_candidate(tmp_path, monkeypatch):
+    from jekyll_writer.config import resolve_path
+    blog_dir = tmp_path / "myblog"
+    blog_dir.mkdir()
+    (blog_dir / "_posts").mkdir()
+
+    monkeypatch.chdir(tmp_path)
+    resolved = resolve_path("myblog")
+    assert resolved == str(blog_dir)

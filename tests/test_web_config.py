@@ -75,3 +75,25 @@ def test_clear_cache(client, tmp_path):
         assert res["success"] is True
         assert res["message"] == "Cache limpo com sucesso!"
         mock_instance.clear_sync_cache.assert_called_once_with(str(tmp_path))
+
+
+def test_check_path(client, tmp_path):
+    # Test path that does not exist
+    res = client.post("/api/config/check-path", json={"path": "/nonexistent/path"})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["root_exists"] is False
+    assert data["posts_dir_exists"] is False
+
+    # Test path that exists with _posts
+    blog_dir = tmp_path / "my_real_blog"
+    posts_dir = blog_dir / "_posts"
+    posts_dir.mkdir(parents=True)
+    (posts_dir / "2026-09-01-welcome.md").write_text("content", encoding="utf-8")
+
+    res = client.post("/api/config/check-path", json={"path": str(blog_dir)})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["root_exists"] is True
+    assert data["posts_dir_exists"] is True
+    assert data["posts_count"] == 1

@@ -35,6 +35,16 @@ app.add_middleware(
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
+@app.middleware("http")
+async def add_no_cache_headers(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path == "/" or path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -64,6 +74,10 @@ class SSHCredentials(BaseModel):
     ssh_password: str
 
 
+class CheckPathPayload(BaseModel):
+    path: str
+
+
 class PublishPayload(BaseModel):
     deploy_mode: Optional[str] = "local"
     ssh_host: Optional[str] = None
@@ -84,12 +98,23 @@ def _sanitize_config(data: Dict[str, Any], cfg: Optional[ConfigManager] = None) 
         sanitized["root_exists"] = val["root_exists"]
         sanitized["posts_dir_exists"] = val["posts_dir_exists"]
         sanitized["posts_count"] = val["posts_count"]
+        sanitized["detected_candidates"] = val["detected_candidates"]
+        sanitized["server_home"] = val["server_home"]
+        sanitized["server_user"] = val["server_user"]
     return sanitized
 
 
 @app.get("/api/config")
 def get_config(cfg: ConfigManager = Depends(get_config_manager)) -> Dict[str, Any]:
     return _sanitize_config(cfg.data, cfg)
+
+
+@app.post("/api/config/check-path")
+def check_path(
+    payload: CheckPathPayload,
+    cfg: ConfigManager = Depends(get_config_manager),
+) -> Dict[str, Any]:
+    return cfg.validate_jekyll_root(test_path=payload.path)
 
 
 @app.post("/api/config")

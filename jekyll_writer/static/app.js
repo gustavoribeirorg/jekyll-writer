@@ -61,6 +61,7 @@
     clearCacheFeedback: document.getElementById('clearCacheFeedback'),
     cfgJekyllRoot: document.getElementById('cfgJekyllRoot'),
     cfgJekyllRootFeedback: document.getElementById('cfgJekyllRootFeedback'),
+    cfgDetectedCandidates: document.getElementById('cfgDetectedCandidates'),
     cfgBuildCommand: document.getElementById('cfgBuildCommand'),
     cfgDeployMode: document.getElementById('cfgDeployMode'),
     sshSettingsFields: document.getElementById('sshSettingsFields'),
@@ -168,21 +169,71 @@
 
   function updateJekyllRootFeedback(data) {
     if (!el.cfgJekyllRootFeedback) return;
-    if (!data || !data.jekyll_root) {
+    const raw = (data && (data.jekyll_root || data.configured_root)) || (el.cfgJekyllRoot ? el.cfgJekyllRoot.value.trim() : '');
+    if (!raw) {
       el.cfgJekyllRootFeedback.textContent = '';
       el.cfgJekyllRootFeedback.className = 'path-feedback-status';
+    } else {
+      const resolved = data.resolved_jekyll_root || data.resolved_root || raw;
+      if (data.posts_dir_exists) {
+        el.cfgJekyllRootFeedback.textContent = `Caminho no servidor: ${resolved} (${data.posts_count} posts encontrados em _posts/)`;
+        el.cfgJekyllRootFeedback.className = 'path-feedback-status success';
+      } else if (data.root_exists) {
+        el.cfgJekyllRootFeedback.textContent = `Pasta encontrada (${resolved}), mas subpasta _posts/ ainda não existe.`;
+        el.cfgJekyllRootFeedback.className = 'path-feedback-status warning';
+      } else {
+        el.cfgJekyllRootFeedback.textContent = `Aviso: Diretório não encontrado no servidor: ${resolved}`;
+        el.cfgJekyllRootFeedback.className = 'path-feedback-status error';
+      }
+    }
+
+    // Render detected candidates if available
+    if (el.cfgDetectedCandidates) {
+      const candidates = (data && data.detected_candidates) || [];
+      if (candidates.length > 0) {
+        el.cfgDetectedCandidates.style.display = 'block';
+        el.cfgDetectedCandidates.innerHTML = `
+          <span class="detected-candidates-title">Pastas do Jekyll detectadas no servidor:</span>
+          <div class="candidates-list">
+            ${candidates.map(c => `<button type="button" class="candidate-chip" data-path="${escapeHtml(c)}">[Usar] ${escapeHtml(c)}</button>`).join('')}
+          </div>
+        `;
+        el.cfgDetectedCandidates.querySelectorAll('.candidate-chip').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const p = btn.getAttribute('data-path');
+            if (el.cfgJekyllRoot) {
+              el.cfgJekyllRoot.value = p;
+              checkPathRealtime(p);
+            }
+          });
+        });
+      } else {
+        el.cfgDetectedCandidates.style.display = 'none';
+      }
+    }
+  }
+
+  let checkPathTimer = null;
+  async function checkPathRealtime(path) {
+    if (!path || !path.trim()) {
+      if (el.cfgJekyllRootFeedback) {
+        el.cfgJekyllRootFeedback.textContent = '';
+        el.cfgJekyllRootFeedback.className = 'path-feedback-status';
+      }
       return;
     }
-    const resolved = data.resolved_jekyll_root || data.jekyll_root;
-    if (data.posts_dir_exists) {
-      el.cfgJekyllRootFeedback.textContent = `Caminho resolvido no servidor: ${resolved} (${data.posts_count} posts encontrados em _posts/)`;
-      el.cfgJekyllRootFeedback.className = 'path-feedback-status success';
-    } else if (data.root_exists) {
-      el.cfgJekyllRootFeedback.textContent = `Pasta encontrada no servidor (${resolved}), mas a subpasta _posts/ ainda não existe.`;
-      el.cfgJekyllRootFeedback.className = 'path-feedback-status warning';
-    } else {
-      el.cfgJekyllRootFeedback.textContent = `Aviso: Diretório não encontrado no servidor: ${resolved}`;
-      el.cfgJekyllRootFeedback.className = 'path-feedback-status error';
+    try {
+      const res = await fetch('/api/config/check-path', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: path.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        updateJekyllRootFeedback(data);
+      }
+    } catch (e) {
+      console.error('Erro ao verificar caminho:', e);
     }
   }
 
@@ -809,6 +860,14 @@
         if (el.clearCacheFeedback) el.clearCacheFeedback.textContent = '';
         loadConfig();
         openModal(el.settingsModal);
+      });
+    }
+    if (el.cfgJekyllRoot) {
+      el.cfgJekyllRoot.addEventListener('input', () => {
+        clearTimeout(checkPathTimer);
+        checkPathTimer = setTimeout(() => {
+          checkPathRealtime(el.cfgJekyllRoot.value);
+        }, 300);
       });
     }
     if (el.cfgDeployMode) {
