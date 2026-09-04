@@ -61,10 +61,18 @@
     clearCacheFeedback: document.getElementById('clearCacheFeedback'),
     cfgJekyllRoot: document.getElementById('cfgJekyllRoot'),
     cfgBuildCommand: document.getElementById('cfgBuildCommand'),
+    cfgDeployMode: document.getElementById('cfgDeployMode'),
+    sshSettingsFields: document.getElementById('sshSettingsFields'),
     cfgRemotePath: document.getElementById('cfgRemotePath'),
     cfgSshUser: document.getElementById('cfgSshUser'),
 
-    // Publish Modal
+    // Confirm Local Publish Modal
+    confirmPublishModal: document.getElementById('confirmPublishModal'),
+    btnCloseConfirmPublishX: document.getElementById('btnCloseConfirmPublishX'),
+    btnCancelConfirmPublish: document.getElementById('btnCancelConfirmPublish'),
+    btnExecuteLocalPublish: document.getElementById('btnExecuteLocalPublish'),
+
+    // Publish Modal (SSH)
     publishModal: document.getElementById('publishModal'),
     btnClosePublishX: document.getElementById('btnClosePublishX'),
     btnCancelPublish: document.getElementById('btnCancelPublish'),
@@ -172,8 +180,13 @@
 
       if (el.cfgJekyllRoot) el.cfgJekyllRoot.value = data.jekyll_root || '';
       if (el.cfgBuildCommand) el.cfgBuildCommand.value = data.jekyll_command || 'bundle exec jekyll build';
+      if (el.cfgDeployMode) el.cfgDeployMode.value = data.deploy_mode || 'local';
       if (el.cfgRemotePath) el.cfgRemotePath.value = data.ssh_remote_path || '';
       if (el.cfgSshUser) el.cfgSshUser.value = data.ssh_user || '';
+
+      if (el.sshSettingsFields) {
+        el.sshSettingsFields.style.display = (data.deploy_mode === 'ssh') ? 'block' : 'none';
+      }
 
       if (el.pubSshHost) el.pubSshHost.value = data.ssh_host || '';
       if (el.pubSshPort) el.pubSshPort.value = data.ssh_port || 22;
@@ -187,6 +200,7 @@
     const payload = {
       jekyll_root: el.cfgJekyllRoot.value.trim(),
       jekyll_command: el.cfgBuildCommand.value.trim(),
+      deploy_mode: el.cfgDeployMode ? el.cfgDeployMode.value : 'local',
       ssh_remote_path: el.cfgRemotePath.value.trim(),
       ssh_user: el.cfgSshUser.value.trim(),
     };
@@ -578,18 +592,33 @@
     if (el.logDrawer) el.logDrawer.classList.toggle('open');
   }
 
-  async function executePublish() {
-    const host = (el.pubSshHost.value || '').trim();
-    const port = parseInt(el.pubSshPort.value, 10) || 22;
-    const user = (el.pubSshUser.value || '').trim();
-    const pass = el.pubSshPassword.value || '';
+  async function executePublish(customPayload = null) {
+    let payload = null;
 
-    if (!host || !user || !pass) {
-      showToast('Preencha todas as credenciais SSH para publicar.', 'warning');
-      return;
+    if (customPayload) {
+      payload = customPayload;
+    } else {
+      const host = (el.pubSshHost.value || '').trim();
+      const port = parseInt(el.pubSshPort.value, 10) || 22;
+      const user = (el.pubSshUser.value || '').trim();
+      const pass = el.pubSshPassword.value || '';
+
+      if (!host || !user || !pass) {
+        showToast('Preencha todas as credenciais SSH para publicar.', 'warning');
+        return;
+      }
+
+      payload = {
+        deploy_mode: 'ssh',
+        ssh_host: host,
+        ssh_port: port,
+        ssh_user: user,
+        ssh_password: pass,
+      };
     }
 
     closeModal(el.publishModal);
+    closeModal(el.confirmPublishModal);
     openLogDrawer();
 
     appendLogLine('Iniciando pipeline de publicação...', 'info');
@@ -599,12 +628,7 @@
       const response = await fetch('/api/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ssh_host: host,
-          ssh_port: port,
-          ssh_user: user,
-          ssh_password: pass,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -717,6 +741,7 @@
       // Escape to close modals or log drawer
       if (e.key === 'Escape') {
         closeModal(el.settingsModal);
+        closeModal(el.confirmPublishModal);
         closeModal(el.publishModal);
         closeLogDrawer();
       }
@@ -758,26 +783,49 @@
         openModal(el.settingsModal);
       });
     }
+    if (el.cfgDeployMode) {
+      el.cfgDeployMode.addEventListener('change', () => {
+        if (el.sshSettingsFields) {
+          el.sshSettingsFields.style.display = (el.cfgDeployMode.value === 'ssh') ? 'block' : 'none';
+        }
+      });
+    }
     if (el.btnCloseSettings) el.btnCloseSettings.addEventListener('click', () => closeModal(el.settingsModal));
     if (el.btnCloseSettingsX) el.btnCloseSettingsX.addEventListener('click', () => closeModal(el.settingsModal));
     if (el.btnSaveSettings) el.btnSaveSettings.addEventListener('click', saveConfig);
     if (el.btnClearCache) el.btnClearCache.addEventListener('click', clearSyncCache);
 
-    // Publish Modal
+    // Publish Trigger (decides between Local Confirm vs SSH Modal)
     if (el.btnOpenPublish) {
       el.btnOpenPublish.addEventListener('click', () => {
-        if (el.sshTestFeedback) el.sshTestFeedback.textContent = '';
-        if (el.pubSshPassword) el.pubSshPassword.value = '';
-        openModal(el.publishModal);
+        const mode = (state.config && state.config.deploy_mode) || (el.cfgDeployMode ? el.cfgDeployMode.value : 'local');
+        if (mode === 'local') {
+          openModal(el.confirmPublishModal);
+        } else {
+          if (el.sshTestFeedback) el.sshTestFeedback.textContent = '';
+          if (el.pubSshPassword) el.pubSshPassword.value = '';
+          openModal(el.publishModal);
+        }
       });
     }
+
+    // Local Publish Modal
+    if (el.btnCloseConfirmPublishX) el.btnCloseConfirmPublishX.addEventListener('click', () => closeModal(el.confirmPublishModal));
+    if (el.btnCancelConfirmPublish) el.btnCancelConfirmPublish.addEventListener('click', () => closeModal(el.confirmPublishModal));
+    if (el.btnExecuteLocalPublish) {
+      el.btnExecuteLocalPublish.addEventListener('click', () => {
+        executePublish({ deploy_mode: 'local' });
+      });
+    }
+
+    // SSH Publish Modal
     if (el.btnClosePublishX) el.btnClosePublishX.addEventListener('click', () => closeModal(el.publishModal));
     if (el.btnCancelPublish) el.btnCancelPublish.addEventListener('click', () => closeModal(el.publishModal));
     if (el.btnTestSsh) el.btnTestSsh.addEventListener('click', testSSHConnection);
-    if (el.btnConfirmPublish) el.btnConfirmPublish.addEventListener('click', executePublish);
+    if (el.btnConfirmPublish) el.btnConfirmPublish.addEventListener('click', () => executePublish());
 
     // Close modals on backdrop click
-    [el.settingsModal, el.publishModal].forEach((modal) => {
+    [el.settingsModal, el.confirmPublishModal, el.publishModal].forEach((modal) => {
       if (modal) {
         modal.addEventListener('click', (e) => {
           if (e.target === modal) closeModal(modal);

@@ -10,6 +10,7 @@ DEFAULT_CONFIG = {
     "ssh_password": "",
     "ssh_remote_path": "",
     "jekyll_command": "bundle exec jekyll build",
+    "deploy_mode": "local",
 }
 
 class ConfigManager:

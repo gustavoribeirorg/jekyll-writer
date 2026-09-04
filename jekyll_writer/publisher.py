@@ -437,7 +437,7 @@ class PublisherEngine:
         jekyll_root: str,
         has_images: bool,
         jekyll_cmd: str,
-        ssh_config: Dict[str, Any]
+        ssh_config: Optional[Dict[str, Any]] = None
     ) -> bool:
         self._is_cancelled = False
         self.log("=========================================", "info")
@@ -463,20 +463,23 @@ class PublisherEngine:
             self.log("Erro na compilação do Jekyll. Envio cancelado.", "error")
             return False
 
-        # 3. Transferência SFTP com Cache Inteligente
         site_dir = os.path.join(jekyll_root, "_site")
         if not os.path.isdir(site_dir):
             self.log(f"Erro: Pasta '{site_dir}' não encontrada após a compilação.", "error")
             return False
 
-        cache_file = os.path.join(jekyll_root, ".jekyll_writer_cache.json")
-        remote_path = ssh_config.get("ssh_remote_path", "").strip() or "~/blog/_site"
-        self.log(f"📡 Transferindo arquivos de _site/ para o servidor remoto...", "info")
-        if not self.sync_sftp(site_dir, remote_path, ssh_config, cache_file=cache_file):
-            self.log("Falha no envio dos arquivos para o servidor.", "error")
-            return False
+        # 3. Transferência SFTP ou Deploy Local
+        if ssh_config and ssh_config.get("ssh_host"):
+            cache_file = os.path.join(jekyll_root, ".jekyll_writer_cache.json")
+            remote_path = ssh_config.get("ssh_remote_path", "").strip() or "~/blog/_site"
+            self.log(f"📡 Transferindo arquivos de _site/ para o servidor remoto via SFTP...", "info")
+            if not self.sync_sftp(site_dir, remote_path, ssh_config, cache_file=cache_file):
+                self.log("Falha no envio dos arquivos para o servidor.", "error")
+                return False
+        else:
+            self.log("⚡ Modo Local: arquivos compilados em _site/ prontos para o servidor web.", "success")
 
         self.log("=========================================", "success")
-        self.log("✅ PUBLICAÇÃO ENVIADA COM SUCESSO!", "success")
+        self.log("✅ PUBLICAÇÃO CONCLUÍDA COM SUCESSO!", "success")
         self.log("=========================================", "success")
         return True

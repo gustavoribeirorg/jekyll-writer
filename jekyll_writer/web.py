@@ -64,6 +64,14 @@ class SSHCredentials(BaseModel):
     ssh_password: str
 
 
+class PublishPayload(BaseModel):
+    deploy_mode: Optional[str] = "local"
+    ssh_host: Optional[str] = None
+    ssh_port: Optional[int] = 22
+    ssh_user: Optional[str] = None
+    ssh_password: Optional[str] = None
+
+
 def get_config_manager() -> ConfigManager:
     return ConfigManager()
 
@@ -81,10 +89,11 @@ def get_config(cfg: ConfigManager = Depends(get_config_manager)) -> Dict[str, An
 def save_config(
     payload: Dict[str, Any],
     cfg: ConfigManager = Depends(get_config_manager),
-) -> Dict[str, Any]:
+):
     allowed_keys = [
         "jekyll_root",
         "jekyll_command",
+        "deploy_mode",
         "ssh_host",
         "ssh_port",
         "ssh_user",
@@ -286,7 +295,7 @@ def test_ssh(data: SSHCredentials) -> Dict[str, Any]:
 
 @app.post("/api/publish")
 def publish_post(
-    data: SSHCredentials,
+    data: PublishPayload = PublishPayload(),
     cfg: ConfigManager = Depends(get_config_manager),
 ):
     jekyll_root = cfg.get("jekyll_root")
@@ -294,13 +303,15 @@ def publish_post(
     if not jekyll_root or not os.path.isdir(jekyll_root):
         raise HTTPException(status_code=400, detail="Diretório do Jekyll não configurado")
 
-    ssh_config = {
-        "ssh_host": data.ssh_host.strip(),
-        "ssh_port": data.ssh_port,
-        "ssh_user": data.ssh_user.strip(),
-        "ssh_password": data.ssh_password,
-        "ssh_remote_path": cfg.get("ssh_remote_path", "").strip() or "~/blog/_site",
-    }
+    ssh_config = None
+    if (data.deploy_mode == "ssh") or (data.ssh_host and data.ssh_host.strip()):
+        ssh_config = {
+            "ssh_host": (data.ssh_host or "").strip(),
+            "ssh_port": data.ssh_port or 22,
+            "ssh_user": (data.ssh_user or "").strip(),
+            "ssh_password": data.ssh_password or "",
+            "ssh_remote_path": cfg.get("ssh_remote_path", "").strip() or "~/blog/_site",
+        }
 
     def event_stream():
         q: queue.Queue = queue.Queue()

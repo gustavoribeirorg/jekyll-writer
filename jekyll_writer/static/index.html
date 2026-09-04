@@ -153,18 +153,29 @@
         </div>
 
         <div class="form-group">
+          <label for="cfgDeployMode">Modo de Publicação:</label>
+          <select id="cfgDeployMode" class="form-control" style="width: 100%; padding: 10px; background: var(--bg-surface-2); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
+            <option value="local">⚡ Direto no Servidor (Local / Termux - sem SSH)</option>
+            <option value="ssh">🌐 Servidor Remoto via SSH/SFTP</option>
+          </select>
+          <small class="form-help">No Termux/Servidor, use "Direto no Servidor" para compilar em _site sem pedir senha.</small>
+        </div>
+
+        <div class="form-group">
           <label for="cfgBuildCommand">Comando de Build:</label>
           <input type="text" id="cfgBuildCommand" placeholder="Ex: bundle exec jekyll build">
         </div>
 
-        <div class="form-group">
-          <label for="cfgRemotePath">Caminho Remoto SSH:</label>
-          <input type="text" id="cfgRemotePath" placeholder="Ex: ~/blog/_site ou /var/www/html">
-        </div>
+        <div id="sshSettingsFields">
+          <div class="form-group">
+            <label for="cfgRemotePath">Caminho Remoto SSH:</label>
+            <input type="text" id="cfgRemotePath" placeholder="Ex: ~/blog/_site ou /var/www/html">
+          </div>
 
-        <div class="form-group">
-          <label for="cfgSshUser">Usuário SSH Padrão:</label>
-          <input type="text" id="cfgSshUser" placeholder="Ex: deploy, ubuntu, root">
+          <div class="form-group">
+            <label for="cfgSshUser">Usuário SSH Padrão:</label>
+            <input type="text" id="cfgSshUser" placeholder="Ex: deploy, ubuntu, root">
+          </div>
         </div>
 
         <div class="modal-actions-inline">
@@ -177,6 +188,28 @@
       <div class="modal-footer">
         <button id="btnCloseSettings" class="btn btn-ghost" type="button">Fechar</button>
         <button id="btnSaveSettings" class="btn btn-primary" type="button">Salvar Configurações</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Local Publish Modal -->
+  <div id="confirmPublishModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="confirmPublishTitle">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h2 id="confirmPublishTitle" class="modal-title">🚀 Publicar Blog</h2>
+        <button id="btnCloseConfirmPublishX" class="modal-close-btn" aria-label="Fechar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-intro">Deseja compilar e publicar o blog diretamente no servidor?</p>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 8px;">
+          O Jekyll executará <code>bundle exec jekyll build</code> e atualizará a pasta <code>_site</code> em tempo real.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelConfirmPublish" class="btn btn-ghost" type="button">Cancelar</button>
+        <button id="btnExecuteLocalPublish" class="btn btn-accent" type="button">
+          <span>🚀 Confirmar e Publicar</span>
+        </button>
       </div>
     </div>
   </div>
