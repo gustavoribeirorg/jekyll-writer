@@ -296,7 +296,7 @@ body {
 
 .search-box input {
   width: 100%;
-  padding: 7px 10px 7px 30px;
+  padding: 7px 10px 7px 32px;
   background-color: var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -312,8 +312,10 @@ body {
 
 .search-icon {
   position: absolute;
-  left: 8px;
-  font-size: 0.8rem;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text-muted);
   pointer-events: none;
 }

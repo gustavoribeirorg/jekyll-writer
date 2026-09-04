@@ -13,6 +13,22 @@ DEFAULT_CONFIG = {
     "deploy_mode": "local",
 }
 
+def resolve_path(path: str) -> str:
+    """
+    Expands user home (~), environment variables ($HOME, %VAR%),
+    and handles platform-specific HOME/USERPROFILE fallback.
+    """
+    if not path or not isinstance(path, str):
+        return ""
+    expanded = os.path.expanduser(path.strip())
+    expanded = os.path.expandvars(expanded)
+    for var_name in ("$HOME", "${HOME}"):
+        if var_name in expanded:
+            home = os.environ.get("HOME") or os.environ.get("USERPROFILE", "")
+            expanded = expanded.replace(var_name, home)
+    return os.path.normpath(expanded)
+
+
 class ConfigManager:
     def __init__(self, config_path: str = "config.json"):
         self.config_path = config_path
@@ -44,8 +60,12 @@ class ConfigManager:
     def set(self, key: str, value: Any) -> None:
         self.data[key] = value
 
-    def get_posts_dir(self) -> str:
+    def get_jekyll_root(self) -> str:
         root = self.get("jekyll_root", "")
+        return resolve_path(root) if root else ""
+
+    def get_posts_dir(self) -> str:
+        root = self.get_jekyll_root()
         if not root or not os.path.isdir(root):
             return ""
         underscore_posts = os.path.join(root, "_posts")

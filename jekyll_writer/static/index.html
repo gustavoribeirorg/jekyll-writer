@@ -52,7 +52,12 @@
         <div class="sidebar-header">
           <div class="search-box">
             <input type="text" id="postSearch" placeholder="Buscar posts..." aria-label="Buscar posts">
-            <span class="search-icon">Search</span>
+            <span class="search-icon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </span>
           </div>
         </div>
         <div id="postList" class="post-list" role="list">
@@ -144,8 +149,8 @@
       <div class="modal-body">
         <div class="form-group">
           <label for="cfgJekyllRoot">Diretório do Jekyll (Root):</label>
-          <input type="text" id="cfgJekyllRoot" placeholder="Ex: C:\Users\nome\blog ou /home/user/blog">
-          <small class="form-help">Pasta raiz do seu projeto Jekyll contendo _posts e _config.yml.</small>
+          <input type="text" id="cfgJekyllRoot" placeholder="Ex: $HOME/blog ou /home/user/blog">
+          <small class="form-help">Pasta raiz do seu projeto Jekyll contendo _posts e _config.yml (suporta $HOME ou ~).</small>
         </div>
 
         <div class="form-group">

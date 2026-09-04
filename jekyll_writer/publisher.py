@@ -11,6 +11,7 @@ from typing import Callable, Optional, Dict, Any, Tuple
 
 from jekyll_writer.image_optimizer import optimize_images, normalize_name
 from jekyll_writer.frontmatter import slugify
+from jekyll_writer.config import resolve_path
 
 class PublisherEngine:
     def __init__(self, log_callback: Optional[Callable[[str, str], None]] = None):
@@ -292,6 +293,7 @@ class PublisherEngine:
         return hasher.hexdigest()
 
     def clear_sync_cache(self, jekyll_root: str) -> bool:
+        jekyll_root = resolve_path(jekyll_root)
         cache_file = os.path.join(jekyll_root, ".jekyll_writer_cache.json")
         if os.path.exists(cache_file):
             try:
@@ -440,6 +442,7 @@ class PublisherEngine:
         ssh_config: Optional[Dict[str, Any]] = None
     ) -> bool:
         self._is_cancelled = False
+        jekyll_root = resolve_path(jekyll_root)
         self.log("=========================================", "info")
         self.log("INICIANDO PIPELINE DE PUBLICAÇÃO", "info")
         self.log("=========================================", "info")

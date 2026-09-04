@@ -113,7 +113,7 @@ def save_config(
 def clear_cache(
     cfg: ConfigManager = Depends(get_config_manager),
 ) -> Dict[str, Any]:
-    root = cfg.get("jekyll_root", "")
+    root = cfg.get_jekyll_root()
     engine = PublisherEngine()
     engine.clear_sync_cache(root)
     return {"success": True, "message": "Cache limpo com sucesso!"}
@@ -223,7 +223,7 @@ def save_post_endpoint(
     payload: PostPayload,
     cfg: ConfigManager = Depends(get_config_manager),
 ) -> Dict[str, Any]:
-    jekyll_root = cfg.get("jekyll_root", "")
+    jekyll_root = cfg.get_jekyll_root()
     posts_dir = cfg.get_posts_dir()
     if not jekyll_root or not os.path.isdir(jekyll_root) or not posts_dir:
         raise HTTPException(status_code=400, detail="Diretório do Jekyll não configurado")
@@ -253,7 +253,7 @@ def upload_image(
     file: UploadFile = File(...),
     cfg: ConfigManager = Depends(get_config_manager),
 ) -> Dict[str, Any]:
-    jekyll_root = cfg.get("jekyll_root", "")
+    jekyll_root = cfg.get_jekyll_root()
     if not jekyll_root or not os.path.isdir(jekyll_root):
         raise HTTPException(status_code=400, detail="Diretório do Jekyll não configurado")
 
@@ -298,7 +298,7 @@ def publish_post(
     data: PublishPayload = PublishPayload(),
     cfg: ConfigManager = Depends(get_config_manager),
 ):
-    jekyll_root = cfg.get("jekyll_root")
+    jekyll_root = cfg.get_jekyll_root()
     jekyll_cmd = cfg.get("jekyll_command", "bundle exec jekyll build")
     if not jekyll_root or not os.path.isdir(jekyll_root):
         raise HTTPException(status_code=400, detail="Diretório do Jekyll não configurado")
